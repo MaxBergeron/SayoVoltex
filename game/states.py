@@ -1,0 +1,5 @@
+MENU = "menu"
+OPTIONS = "options"
+PLAY = "play"
+QUIT = "quit"
+SET_KEYBINDS = "set_keybinds"

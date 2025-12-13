@@ -1,3 +1,25 @@
-from game import menu_screen
+from game import screen_main, screen_options, screen_play, screen_set_keybinds
+from game import states, utils
+import pygame, sys
 
-menu_screen.main_menu()
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+
+
+state = states.MENU
+
+while True:
+    if state == states.MENU:
+        state = screen_main.main_menu(screen)
+
+    elif state == states.OPTIONS:
+        state = screen_options.options_menu(screen)
+    elif state == states.SET_KEYBINDS:
+        state = screen_set_keybinds.set_keybinds_menu(screen)
+        
+    elif state == states.PLAY:
+        state = screen_play.play_menu(screen)
+
+    elif state == states.QUIT:
+        pygame.quit()
+        sys.exit()
