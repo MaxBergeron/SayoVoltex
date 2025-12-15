@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils
+from game import button, states, utils, constants
 
 
 
@@ -12,11 +12,11 @@ def play_menu(screen):
         screen.blit(play_background, (0, 0))
         play_mouse_pos = pygame.mouse.get_pos()
 
-        play_text = utils.get_font(150).render("Play", True, "#b68f40")
-        play_text_rect = play_text.get_rect(center=(640, 100))
+        play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
+        play_text_rect = play_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
-        back_button = button.Button(image=None, pos=(640, 400), 
-                             text_input="Back", font=utils.get_font(75), 
+        back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
         
         screen.blit(play_text, play_text_rect)

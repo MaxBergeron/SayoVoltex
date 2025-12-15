@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils
+from game import button, states, utils, constants
 
 
 
@@ -14,17 +14,17 @@ def main_menu(screen):
 
         menu_mouse_pos = pygame.mouse.get_pos()
 
-        menu_text = utils.get_font(150).render("MAIN MENU", True, "#b68f40")
-        menu_text_rect = menu_text.get_rect(center=(640, 100))
+        menu_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("MAIN MENU", True, "#b68f40")
+        menu_text_rect = menu_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
-        play_button = button.Button(image=None, pos=(640, 250), 
-                             text_input="PLAY", font=utils.get_font(75), 
+        play_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(250)), 
+                             text_input="PLAY", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)), 
                              base_color="#d7fcd4", hovering_color="White")
-        options_button = button.Button(image=None, pos=(640, 400), 
-                                text_input="OPTIONS", font=utils.get_font(75), 
+        options_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(400)), 
+                                text_input="OPTIONS", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)), 
                                 base_color="#d7fcd4", hovering_color="White")
-        quit_button = button.Button(image=None, pos=(640, 550), 
-                             text_input="QUIT", font=utils.get_font(75),
+        quit_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(550)), 
+                             text_input="QUIT", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)),
                              base_color="#d7fcd4", hovering_color="White")
         
         screen.blit(menu_text, menu_text_rect)

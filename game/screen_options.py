@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils
+from game import button, states, utils, constants
 
 
 def options_menu(screen):
@@ -12,15 +12,15 @@ def options_menu(screen):
 
         options_mouse_pos = pygame.mouse.get_pos()
 
-        options_text = utils.get_font(150).render("OPTIONS MENU", True, "#b68f40")
-        options_text_rect = options_text.get_rect(center=(640, 100))
+        options_text = utils.get_font(constants.SIZE_LARGE).render("OPTIONS MENU", True, "#b68f40")
+        options_text_rect = options_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
-        set_keybinds_button = button.Button(image=None, pos=(640, 250), 
-                             text_input="SET KEYBINDS", font=utils.get_font(75), 
+        set_keybinds_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(250)), 
+                             text_input="SET KEYBINDS", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
         
-        back_button = button.Button(image=None, pos=(640, 400), 
-                             text_input="Back", font=utils.get_font(75), 
+        back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
 
         screen.blit(options_text, options_text_rect)

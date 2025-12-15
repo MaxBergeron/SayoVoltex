@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils
+from game import button, constants, states, utils
 
 
 
@@ -8,31 +8,51 @@ def set_keybinds_menu(screen):
     set_keybinds_background = pygame.image.load("assets/set_keybinds_background.png")
     set_keybinds_background = pygame.transform.scale(set_keybinds_background, screen.get_size()).convert()
     sayodevice_template_image = pygame.image.load("assets/template_sayodevice.png").convert_alpha()
-    sayodevice_template_image = pygame.transform.scale(sayodevice_template_image, (500, 400))
+    sayodevice_template_image = pygame.transform.scale(sayodevice_template_image, (utils.scale_x(500), utils.scale_y(500)))
 
-    button_image = pygame.image.load("assets/clear_box.png").convert_alpha()
-    button_image = pygame.transform.scale(button_image, (250, 75))
+    set_key_button_image = pygame.image.load("assets/clear_box.png").convert_alpha()
+    set_key_button_image = pygame.transform.scale(set_key_button_image, (utils.scale_x(138), utils.scale_y(113)))
+    #set_key_button_image.set_alpha(200)
+
+    set_wheel_button_image = pygame.image.load("assets/clear_box.png").convert_alpha()
+    set_wheel_button_image = pygame.transform.scale(set_wheel_button_image, (utils.scale_x(80), utils.scale_y(126)))
+    #set_wheel_button_image.set_alpha(200)
+
+    waiting_for_key = False
+    key_to_bind = None
                                                      
     while True:
         
         screen.blit(set_keybinds_background, (0, 0))
-        screen.blit(sayodevice_template_image, (750, 150))
+        screen.blit(sayodevice_template_image, (utils.scale_x(400), utils.scale_y(200)))
 
         options_mouse_pos = pygame.mouse.get_pos()
 
         options_text = utils.get_font(150).render("SET KEYBINDS", True, "#b68f40")
-        options_text_rect = options_text.get_rect(center=(640, 100))
-        
-        back_button = button.Button(image=None, pos=(640, 400), 
-                             text_input="Back", font=utils.get_font(75), 
+        options_text_rect = options_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+
+        back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
-        set_key1_button = button.Button(image=button_image, pos=(400, 300), 
-                             text_input="", font=utils.get_font(50), 
+        set_key1_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(495), utils.scale_y(572)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
+        set_key2_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(654), utils.scale_y(571)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+        set_key3_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(809), utils.scale_y(570)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+        set_keyCCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(441), utils.scale_y(420)),
+                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                                base_color="#d7fcd4", hovering_color="White")
+        set_keyCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(525), utils.scale_y(420)),
+                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                                base_color="#d7fcd4", hovering_color="White")
 
         screen.blit(options_text, options_text_rect)
 
-        for b in [set_key1_button, back_button]:
+        for b in [set_key1_button, set_key2_button, set_key3_button, set_keyCCW_button, set_keyCW_button, back_button]:
             b.change_color(options_mouse_pos)
             b.update(screen)
 
@@ -43,10 +63,52 @@ def set_keybinds_menu(screen):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if back_button.check_for_input(options_mouse_pos):
-                    return states.MENU
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return states.MENU
+                if not waiting_for_key:
+                    if back_button.check_for_input(options_mouse_pos):
+                        return states.MENU
+                    if set_key1_button.check_for_input(options_mouse_pos):
+                        print("Press a key to bind to Key 1")
+                        waiting_for_key = True
+                        key_to_bind = "key_1"
+                    if set_key2_button.check_for_input(options_mouse_pos):
+                        print("Press a key to bind to Key 2")
+                        waiting_for_key = True
+                        key_to_bind = "key_2"
+                    if set_key3_button.check_for_input(options_mouse_pos):
+                        print("Press a key to bind to Key 3")
+                        waiting_for_key = True
+                        key_to_bind = "key_3"
+                    if set_keyCCW_button.check_for_input(options_mouse_pos):
+                        print("Press a key to bind to Rotate CCW")
+                        waiting_for_key = True
+                        key_to_bind = "key_CCW"
+                    if set_keyCW_button.check_for_input(options_mouse_pos):
+                        print("Press a key to bind to Rotate CW")
+                        waiting_for_key = True
+                        key_to_bind = "key_CW"
 
+            if event.type == pygame.KEYDOWN:
+                if waiting_for_key:
+                    if event.key == pygame.K_ESCAPE:
+                        waiting_for_key = False  
+                    else:
+                        utils.set_keybinding(key_to_bind, event.key)
+                        waiting_for_key = False
+                else:
+                    if event.key == pygame.K_ESCAPE:
+                        return states.MENU
+        if waiting_for_key:
+            draw_bind_key_popup(screen)
         pygame.display.flip()
+
+def draw_bind_key_popup(screen):
+    popup_width, popup_height = utils.scale_x(700), utils.scale_y(250)
+    popup_x = (screen.get_width() - popup_width) // 2
+    popup_y = (screen.get_height() - popup_height) // 2
+    popup_rect = pygame.Rect(popup_x, popup_y, popup_width, popup_height)
+    pygame.draw.rect(screen, (50, 50, 50), popup_rect)
+    pygame.draw.rect(screen, (255, 255, 255), popup_rect, 2)
+
+    prompt_text = utils.get_font(30).render("Press a key to bind, or ESC to cancel", True, (255, 255, 255))
+    prompt_rect = prompt_text.get_rect(center=popup_rect.center)
+    screen.blit(prompt_text, prompt_rect)
