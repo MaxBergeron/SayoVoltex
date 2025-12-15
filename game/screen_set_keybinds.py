@@ -26,10 +26,10 @@ def set_keybinds_menu(screen):
         screen.blit(set_keybinds_background, (0, 0))
         screen.blit(sayodevice_template_image, (utils.scale_x(400), utils.scale_y(200)))
 
-        options_mouse_pos = pygame.mouse.get_pos()
+        set_keybinds_mouse_pos = pygame.mouse.get_pos()
 
-        options_text = utils.get_font(150).render("SET KEYBINDS", True, "#b68f40")
-        options_text_rect = options_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+        set_keybinds_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("SET KEYBINDS", True, "#b68f40")
+        set_keybinds_text_rect = set_keybinds_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
         back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
                              text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
@@ -50,10 +50,10 @@ def set_keybinds_menu(screen):
                                 text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                                 base_color="#d7fcd4", hovering_color="White")
 
-        screen.blit(options_text, options_text_rect)
+        screen.blit(set_keybinds_text, set_keybinds_text_rect)
 
         for b in [set_key1_button, set_key2_button, set_key3_button, set_keyCCW_button, set_keyCW_button, back_button]:
-            b.change_color(options_mouse_pos)
+            b.change_color(set_keybinds_mouse_pos)
             b.update(screen)
 
 
@@ -64,25 +64,25 @@ def set_keybinds_menu(screen):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if not waiting_for_key:
-                    if back_button.check_for_input(options_mouse_pos):
+                    if back_button.check_for_input(set_keybinds_mouse_pos):
                         return states.MENU
-                    if set_key1_button.check_for_input(options_mouse_pos):
+                    if set_key1_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Key 1")
                         waiting_for_key = True
                         key_to_bind = "key_1"
-                    if set_key2_button.check_for_input(options_mouse_pos):
+                    if set_key2_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Key 2")
                         waiting_for_key = True
                         key_to_bind = "key_2"
-                    if set_key3_button.check_for_input(options_mouse_pos):
+                    if set_key3_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Key 3")
                         waiting_for_key = True
                         key_to_bind = "key_3"
-                    if set_keyCCW_button.check_for_input(options_mouse_pos):
+                    if set_keyCCW_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Rotate CCW")
                         waiting_for_key = True
                         key_to_bind = "key_CCW"
-                    if set_keyCW_button.check_for_input(options_mouse_pos):
+                    if set_keyCW_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Rotate CW")
                         waiting_for_key = True
                         key_to_bind = "key_CW"
@@ -102,13 +102,13 @@ def set_keybinds_menu(screen):
         pygame.display.flip()
 
 def draw_bind_key_popup(screen):
-    popup_width, popup_height = utils.scale_x(700), utils.scale_y(250)
+    popup_width, popup_height = utils.scale_x(600), utils.scale_y(250)
     popup_x = (screen.get_width() - popup_width) // 2
     popup_y = (screen.get_height() - popup_height) // 2
     popup_rect = pygame.Rect(popup_x, popup_y, popup_width, popup_height)
     pygame.draw.rect(screen, (50, 50, 50), popup_rect)
     pygame.draw.rect(screen, (255, 255, 255), popup_rect, 2)
 
-    prompt_text = utils.get_font(30).render("Press a key to bind, or ESC to cancel", True, (255, 255, 255))
+    prompt_text = utils.get_font(constants.SIZE_TINY).render("Press a key to bind, or ESC to cancel", True, (255, 255, 255))
     prompt_rect = prompt_text.get_rect(center=popup_rect.center)
     screen.blit(prompt_text, prompt_rect)
