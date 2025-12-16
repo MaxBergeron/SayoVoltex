@@ -18,6 +18,28 @@ def set_keybinds_menu(screen):
     set_wheel_button_image = pygame.transform.scale(set_wheel_button_image, (utils.scale_x(80), utils.scale_y(126)))
     #set_wheel_button_image.set_alpha(200)
 
+    set_keybinds_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("SET KEYBINDS", True, "#b68f40")
+    set_keybinds_text_rect = set_keybinds_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+
+    back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+    set_key1_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(495), utils.scale_y(572)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+    set_key2_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(654), utils.scale_y(571)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+    set_key3_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(809), utils.scale_y(570)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+    set_keyCCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(441), utils.scale_y(420)),
+                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                                base_color="#d7fcd4", hovering_color="White")
+    set_keyCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(525), utils.scale_y(420)),
+                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                                base_color="#d7fcd4", hovering_color="White")
+
     waiting_for_key = False
     key_to_bind = None
                                                      
@@ -28,35 +50,11 @@ def set_keybinds_menu(screen):
 
         set_keybinds_mouse_pos = pygame.mouse.get_pos()
 
-        set_keybinds_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("SET KEYBINDS", True, "#b68f40")
-        set_keybinds_text_rect = set_keybinds_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
-
-        back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
-                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                             base_color="#d7fcd4", hovering_color="White")
-        set_key1_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(495), utils.scale_y(572)), 
-                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                             base_color="#d7fcd4", hovering_color="White")
-        set_key2_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(654), utils.scale_y(571)), 
-                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                             base_color="#d7fcd4", hovering_color="White")
-        set_key3_button = button.Button(image=set_key_button_image, pos=(utils.scale_x(809), utils.scale_y(570)), 
-                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                             base_color="#d7fcd4", hovering_color="White")
-        set_keyCCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(441), utils.scale_y(420)),
-                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                                base_color="#d7fcd4", hovering_color="White")
-        set_keyCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(525), utils.scale_y(420)),
-                                text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                                base_color="#d7fcd4", hovering_color="White")
-
         screen.blit(set_keybinds_text, set_keybinds_text_rect)
 
         for b in [set_key1_button, set_key2_button, set_key3_button, set_keyCCW_button, set_keyCW_button, back_button]:
             b.change_color(set_keybinds_mouse_pos)
             b.update(screen)
-
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

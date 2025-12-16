@@ -1,0 +1,19 @@
+SayoVortex file format v1
+
+[General]
+AudioFilename: testSong1.mp3
+AudioLeadIn: 1000
+
+[Metadata]
+Title: Waking Yashinoki
+Artist: Yukopi
+Creator: Corgo
+Version: Easy
+
+// Hit Object Ordering
+// 3-key configuration (1-7), hold duration, time position, 
+[HitObjects]
+
+// Laser Object Ordering
+// continue chain (0 false 1 true), start position, time position
+[LaserObjects]

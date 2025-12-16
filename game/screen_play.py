@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils, constants
+from game import button, states, utils, constants, song_tile
 
 
 
@@ -8,18 +8,31 @@ def play_menu(screen):
     play_background = pygame.image.load("assets/play_background.jpg")
     play_background = pygame.transform.scale(play_background, screen.get_size()).convert()
 
+    play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
+    play_text_rect = play_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+
+    back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
+        
+    song_tile_1 = song_tile.SongTile(
+        title="Sample Song",
+        artist="Sample Artist",
+        creator="Sample Creator",
+        version="1.0",
+        image_path="song_folder/song_1/bg.png",
+        BPM=120,
+        length_seconds=180,
+        scroll_speed=1.0
+    )
+
     while True:
         screen.blit(play_background, (0, 0))
         play_mouse_pos = pygame.mouse.get_pos()
 
-        play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
-        play_text_rect = play_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
-
-        back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
-                             text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
-                             base_color="#d7fcd4", hovering_color="White")
-        
         screen.blit(play_text, play_text_rect)
+
+        song_tile_1.update(screen)
 
         for b in [back_button]:
             b.change_color(play_mouse_pos)
