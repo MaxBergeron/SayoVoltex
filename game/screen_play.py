@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, os
 from game import button, states, utils, constants, song_tile
 
 
@@ -11,28 +11,38 @@ def play_menu(screen):
     play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
     play_text_rect = play_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
+    song_tile_cover = pygame.image.load("assets/song_tile_cover.png").convert_alpha()
+    song_tile_cover = pygame.transform.scale(song_tile_cover, (utils.scale_x(225), utils.scale_y(75)))
+
     back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
                              text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
-        
-    song_tile_1 = song_tile.SongTile(
-        title="Sample Song",
-        artist="Sample Artist",
-        creator="Sample Creator",
-        version="1.0",
-        image_path="song_folder/song_1/bg.png",
-        BPM=120,
-        length_seconds=180,
-        scroll_speed=1.0
-    )
+
+    song_tiles = []
+
+    song_folder = "song_folder"
+    for entry in os.listdir(song_folder):
+        full_path = os.path.join(song_folder, entry)
+        if os.path.isdir(full_path):
+            tile = song_tile.SongTile(
+                song_folder_path = full_path,
+                cover = song_tile_cover,
+            )
+            song_tiles.append(tile)
+
+    for i, tile in enumerate(song_tiles):
+        tile.position = (
+            utils.scale_x(1080),
+            utils.scale_y(100) + i * utils.scale_y(100)
+        )
 
     while True:
         screen.blit(play_background, (0, 0))
         play_mouse_pos = pygame.mouse.get_pos()
 
         screen.blit(play_text, play_text_rect)
-
-        song_tile_1.update(screen)
+        for tile in song_tiles:
+            tile.update(screen)
 
         for b in [back_button]:
             b.change_color(play_mouse_pos)
@@ -46,6 +56,16 @@ def play_menu(screen):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if back_button.check_for_input(play_mouse_pos):
                     return states.MENU
+                for tile in song_tiles:
+                    if tile.check_for_input(play_mouse_pos):
+                        print(f"Selected song: {tile.title}")
+                        print(f"Artist: {tile.artist}")
+                        print(f"Creator: {tile.creator}")
+                        print(f"Version: {tile.version}")
+                        print(f"Length: {tile.length} seconds")
+                        print(f"Scroll Speed: {tile.scroll_speed}")
+                        print(f"BPM: {tile.BPM}")
+                
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return states.MENU
