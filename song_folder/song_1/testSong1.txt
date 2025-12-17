@@ -1,5 +1,4 @@
 [General]
-Audio_Filename: testSong1.mp3
 Audio_Lead_In: 1000
 
 [Metadata]
@@ -7,7 +6,7 @@ Title: Waking Yashinoki
 Artist: Yukopi
 Creator: Corgo
 Version: Easy
-Length: 1:56
+Length: 156
 Scroll_Speed: 0.35
 BPM: 120
 Image_File_Path: bg.png

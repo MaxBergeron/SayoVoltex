@@ -1,5 +1,5 @@
 import pygame, sys, os
-from game import button, states, utils, constants, song_tile
+from game import button, states, utils, constants, song_tile, map_details
 
 
 
@@ -20,6 +20,8 @@ def play_menu(screen):
 
     song_tiles = []
 
+    selected_tile = None
+
     song_folder = "song_folder"
     for entry in os.listdir(song_folder):
         full_path = os.path.join(song_folder, entry)
@@ -36,6 +38,8 @@ def play_menu(screen):
             utils.scale_y(100) + i * utils.scale_y(100)
         )
 
+    map_info = map_details.MapDetails()
+
     while True:
         screen.blit(play_background, (0, 0))
         play_mouse_pos = pygame.mouse.get_pos()
@@ -48,6 +52,8 @@ def play_menu(screen):
             b.change_color(play_mouse_pos)
             b.update(screen)
 
+        map_info.update(screen)
+
         # Handle Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -58,13 +64,18 @@ def play_menu(screen):
                     return states.MENU
                 for tile in song_tiles:
                     if tile.check_for_input(play_mouse_pos):
-                        print(f"Selected song: {tile.title}")
-                        print(f"Artist: {tile.artist}")
-                        print(f"Creator: {tile.creator}")
-                        print(f"Version: {tile.version}")
-                        print(f"Length: {tile.length} seconds")
-                        print(f"Scroll Speed: {tile.scroll_speed}")
-                        print(f"BPM: {tile.BPM}")
+                        if selected_tile != tile:
+                            selected_tile = tile
+
+                            map_info.title = tile.title
+                            map_info.artist = tile.artist
+                            map_info.creator = tile.creator
+                            map_info.version = tile.version
+                            map_info.length = tile.length
+                            map_info.scroll_speed = tile.scroll_speed
+                            map_info.BPM = tile.BPM
+                        else:
+                            return states.MAP              
                 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:

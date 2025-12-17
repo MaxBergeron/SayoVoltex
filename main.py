@@ -1,4 +1,4 @@
-from game import screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution
+from game import screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map
 from game import states, utils, constants
 import pygame, sys
 
@@ -24,6 +24,8 @@ while True:
         
     elif state == states.PLAY:
         state = screen_play.play_menu(screen)
+    elif state == states.MAP:
+        state = screen_map.map_loader(screen)
 
     elif state == states.QUIT:
         pygame.quit()

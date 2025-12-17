@@ -5,7 +5,10 @@ class SongTile:
     def __init__(self, song_folder_path, cover):
 
         self.cover = cover
+
         self.song_data_path = self.find_song_metadata(song_folder_path)
+        self.audio_path = self.find_music_in_folder(song_folder_path)
+        self.image_path = self.find_image_in_folder()
 
         parsed_metadata = self.parse_song_metadata(self.song_data_path)
         self.title = parsed_metadata.get("Title", "NULL")
@@ -16,7 +19,6 @@ class SongTile:
         self.scroll_speed = parsed_metadata.get("Scroll_Speed", 0.0)
         self.BPM = parsed_metadata.get("BPM", 0)
 
-        self.image_path = self.find_image_in_folder()
         self.image = pygame.image.load(self.image_path).convert_alpha()
         width, height = self.image.get_size()
         crop_rect = pygame.Rect(width//6, height//6, 2*width//3, 2*height//3)
@@ -51,6 +53,13 @@ class SongTile:
         for f in os.listdir(folder):
             if f.lower().endswith(('.png', '.jpg', '.jpeg')):
                 return os.path.join(folder, f)
+        return None
+    
+    def find_music_in_folder(self, folder_path):
+        for f in os.listdir(folder_path):
+            full_path = os.path.join(folder_path, f)
+            if os.path.isfile(full_path) and f.lower().endswith(('.mp3', '.mp4')):
+                return full_path
         return None
     
     def find_song_metadata(self, folder_path):

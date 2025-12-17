@@ -7,7 +7,7 @@ Title: Waking Yashinoki
 Artist: Yukopi
 Creator: Corgo
 Version: Easy
-Length: 1:56
+Length: 156
 Scroll_Speed: 0.35
 BPM: 120
 Image_File_Path: bg.png
