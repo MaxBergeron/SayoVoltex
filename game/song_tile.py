@@ -18,6 +18,7 @@ class SongTile:
         self.length = parsed_metadata.get("Length", 0)
         self.scroll_speed = parsed_metadata.get("Scroll_Speed", 0.0)
         self.BPM = parsed_metadata.get("BPM", 0)
+        self.audio_lead_in = parsed_metadata.get("Audio_Lead_In", 0)
 
         self.image = pygame.image.load(self.image_path).convert_alpha()
         width, height = self.image.get_size()

@@ -75,7 +75,8 @@ def play_menu(screen):
                             map_info.scroll_speed = tile.scroll_speed
                             map_info.BPM = tile.BPM
                         else:
-                            return states.MAP              
+                            constants.SELECTED_TILE = tile
+                            return states.MAP
                 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
