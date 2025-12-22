@@ -20,6 +20,6 @@ class LaserObject:
         self.full_swing = int(full_swing)
         self.position = int(position)
         self.time = float(time)
-
+ 
     def __repr__(self):
         return f"LaserObject(chain={self.continue_chain}, pos={self.position}, time={self.time})"
