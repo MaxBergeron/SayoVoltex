@@ -40,13 +40,32 @@ def map_loader(screen):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return states.MAP
-                key_str = utils.key_binding.get(event.key)
+                key_str = utils.get_action_from_key(event.key)
+                print(key_str)
+                for note in hit_object_data["HitObjects"]:
+                    if note.hit or note.hold_complete:
+                        continue
+                    if note.duration == 0:
+                        if abs(current_time_ms - note.time) < constants.HIT_WINDOW and utils.convert_int_to_key(note.key) == key_str:
+                            note.hit = True
+                    else:
+                        if abs(current_time_ms - note.time) < constants.HIT_WINDOW and utils.convert_int_to_key(note.key) == key_str and not note.hold_started:
+                            note.hold_started = True
+                            
+            elif event.type == pygame.KEYUP:
+                key_str = utils.get_action_from_key(event.key)
+                for note in hit_object_data["HitObjects"]:
+                    if note.duration > 0 and note.hold_started and utils.convert_int_to_key(note.key) == key_str:
+                        if abs(current_time_ms - (note.time + note.duration)) < constants.HIT_WINDOW:
+                            note.hold_complete = True
+                        note.hold_started = False
+               
 
 
         for note in hit_object_data["HitObjects"]:
-            if note.hit:
+            if note.hit or note.hold_complete:
                 continue
-            note.position_y = hit_line_y - (note.time - current_time_ms) * scroll_speed
+            draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
 
 
         pygame.display.flip()
@@ -87,5 +106,35 @@ def draw_lanes(screen, hit_line_y, x_center):
         screen, (255, 0, 0),
         (utils.scale_x(x_center - 202), utils.scale_y(hit_line_y)),
         (utils.scale_x(x_center + 202), utils.scale_y(hit_line_y)),
-        max(1, utils.scale_y(3)),
+        max(1, utils.scale_y(10)),
     )
+
+def draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms):
+    top_y = hit_line_y - (note.time - current_time_ms) * scroll_speed
+
+    if note.duration <= 0:
+        # TAP note
+        screen.blit(constants.TAP_NOTE_IMAGE, (note.position_x, top_y))
+        return
+
+    # HOLD note
+    note_length = note.duration * scroll_speed
+    head_h = constants.HOLD_NOTE_HEAD_IMAGE.get_height()
+    tail_h = constants.HOLD_NOTE_TAIL_IMAGE.get_height()
+    head_top = top_y  # head image top
+    tail_top = top_y - (note_length - head_h)  # tail grows upward from head
+    body_top = tail_top + tail_h  # top of first body tile
+    body_bottom = head_top  # bottom of last body tile
+
+    # Draw head
+    screen.blit(constants.HOLD_NOTE_HEAD_IMAGE, (note.position_x, top_y))
+
+    # Draw body (tile)
+    y = body_bottom - constants.HOLD_NOTE_BODY_IMAGE.get_height()
+    
+    while y >= body_top - tail_h - constants.HOLD_NOTE_BODY_IMAGE.get_height():
+        screen.blit(constants.HOLD_NOTE_BODY_IMAGE, (note.position_x, y))
+        y -= constants.HOLD_NOTE_BODY_IMAGE.get_height()
+
+    # Draw tail
+    screen.blit(constants.HOLD_NOTE_TAIL_IMAGE, (note.position_x, top_y - note_length))

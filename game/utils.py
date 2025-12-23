@@ -24,3 +24,43 @@ def scale_pos(x, y):
     return int(x * constants.SCALE_X), int(y * constants.SCALE_Y)
 def scale_size(width, height):
     return int(width * constants.SCALE_X), int(height * constants.SCALE_Y)
+
+def load_assets():
+    NOTE_W = scale_x(100)
+    NOTE_H = scale_y(10)
+
+    constants.TAP_NOTE_IMAGE = pygame.transform.scale(
+        pygame.image.load("assets/Skin/hit_note.png").convert_alpha(),
+        (NOTE_W, NOTE_H)
+    )
+
+    constants.HOLD_NOTE_HEAD_IMAGE = pygame.transform.scale(
+        pygame.image.load("assets/Skin/hold_note_head.png").convert_alpha(),
+        (NOTE_W, NOTE_H)
+    )
+
+    constants.HOLD_NOTE_BODY_IMAGE = pygame.transform.scale(
+        pygame.image.load("assets/Skin/hold_note_body.png").convert_alpha(),
+        (NOTE_W, NOTE_H)
+    )
+
+    constants.HOLD_NOTE_TAIL_IMAGE = pygame.transform.scale(
+        pygame.image.load("assets/Skin/hold_note_tail.png").convert_alpha(),
+        (NOTE_W, NOTE_H)
+    )
+
+def convert_int_to_key(key_int):
+    key_map = {
+        1: "key_1",
+        2: "key_2",
+        3: "key_3",
+        4: "key_CCW",
+        5: "key_CW"
+    }
+    return key_map.get(key_int, None)
+
+def get_action_from_key(key):
+    for action, mapped_key in key_bindings.items():
+        if key == mapped_key:
+            return action
+    return None

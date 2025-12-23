@@ -1,3 +1,5 @@
+import pygame
+from game import constants, utils
 BASE_W = 1280
 BASE_H = 720
 
@@ -22,3 +24,8 @@ SIZE_XLARGE = 175.0
 SIZE_XXLARGE = 200.0
 
 SELECTED_TILE = None
+
+TAP_NOTE_IMAGE = None
+HOLD_NOTE_HEAD_IMAGE = None
+HOLD_NOTE_BODY_IMAGE = None
+HOLD_NOTE_TAIL_IMAGE = None

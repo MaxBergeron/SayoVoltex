@@ -23,6 +23,9 @@ def main_menu(screen):
                              text_input="QUIT", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)),
                              base_color="#d7fcd4", hovering_color="White")
     
+    # Load image assets for later
+    utils.load_assets()
+    
     while True:
         screen.blit(main_menu_background, (0, 0))
 

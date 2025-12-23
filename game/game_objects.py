@@ -1,3 +1,6 @@
+import pygame
+from game import constants, utils
+
 class HitObject:
     def __init__(self, key, duration, time):
         self.key = int(key)
