@@ -48,6 +48,15 @@ def load_assets():
         pygame.image.load("assets/Skin/hold_note_tail.png").convert_alpha(),
         (NOTE_W, NOTE_H)
     )
+    constants.HOLD_NOTE_HEAD_IMAGE_TINTED = tint(constants.HOLD_NOTE_HEAD_IMAGE, (0, 200, 255))
+    constants.HOLD_NOTE_BODY_IMAGE_TINTED = tint(constants.HOLD_NOTE_BODY_IMAGE, (0, 200, 255))
+    constants.HOLD_NOTE_TAIL_IMAGE_TINTED = tint(constants.HOLD_NOTE_TAIL_IMAGE, (0, 200, 255))
+
+def tint(surface, color):
+    s = surface.copy()
+    s.fill(color, special_flags=pygame.BLEND_RGBA_MULT)
+    return s
+
 
 def convert_int_to_key(key_int):
     key_map = {

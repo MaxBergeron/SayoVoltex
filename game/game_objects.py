@@ -7,10 +7,9 @@ class HitObject:
         self.duration = float(duration)
         self.time = float(time)
         self.hit = False
-        self.position_y = 0
         self.position_x = 0
         self.hold_started = False
-        self.hold_end = 0
+        self.holding = False
         self.hold_complete = False
 
     def __repr__(self):

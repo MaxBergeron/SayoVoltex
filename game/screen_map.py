@@ -40,30 +40,50 @@ def map_loader(screen):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return states.MAP
-                key_str = utils.get_action_from_key(event.key)
-                print(key_str)
+                key_str = utils.get_action_from_key(event.key) 
                 for note in hit_object_data["HitObjects"]:
-                    if note.hit or note.hold_complete:
+                    # Dont reference if note is complete or off screen
+                    if note.hit or note.hold_complete or current_time_ms - (note.time + note.duration) > utils.scale_y(300):
                         continue
-                    if note.duration == 0:
-                        if abs(current_time_ms - note.time) < constants.HIT_WINDOW and utils.convert_int_to_key(note.key) == key_str:
+                    # Tap note hit
+                    if note.duration == 0 and utils.convert_int_to_key(note.key) == key_str:
+                        # Hit out of window
+                        if abs(current_time_ms - note.time) < constants.HIT_WINDOW * constants.MISS_WINDOW_RATIO:
                             note.hit = True
-                    else:
-                        if abs(current_time_ms - note.time) < constants.HIT_WINDOW and utils.convert_int_to_key(note.key) == key_str and not note.hold_started:
-                            note.hold_started = True
+                            print(evaluate_hit(note, current_time_ms))
+
+                    # Hold note Hit
+                    elif utils.convert_int_to_key(note.key) == key_str:
+                            if abs(current_time_ms - note.time) < constants.HIT_WINDOW and not note.hold_started:
+                                note.hold_started = True
+                                note.holding = True
+                                print(evaluate_hit(note, current_time_ms))
+                            # Hit Late
+                            elif current_time_ms > note.time and current_time_ms < note.time + note.duration and not note.hold_started:
+                                note.holding = True
+                                print(evaluate_hit(note, current_time_ms))
+
+
+
                             
             elif event.type == pygame.KEYUP:
                 key_str = utils.get_action_from_key(event.key)
                 for note in hit_object_data["HitObjects"]:
-                    if note.duration > 0 and note.hold_started and utils.convert_int_to_key(note.key) == key_str:
+                    # Dont reference if note is complete or off screen
+                    if note.hit or note.hold_complete or current_time_ms - (note.time + note.duration) > utils.scale_y(300):
+                        continue
+                    # Hold note release
+                    if note.duration > 0 and (note.hold_started or note.holding) and utils.convert_int_to_key(note.key) == key_str:
                         if abs(current_time_ms - (note.time + note.duration)) < constants.HIT_WINDOW:
                             note.hold_complete = True
-                        note.hold_started = False
+                        print(evaluate_hit(note, current_time_ms))
+                        note.holding = False
+
                
 
 
         for note in hit_object_data["HitObjects"]:
-            if note.hit or note.hold_complete:
+            if note.hit or note.hold_complete or current_time_ms - (note.time + note.duration) > utils.scale_y(300):
                 continue
             draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
 
@@ -112,29 +132,62 @@ def draw_lanes(screen, hit_line_y, x_center):
 def draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms):
     top_y = hit_line_y - (note.time - current_time_ms) * scroll_speed
 
+    # TAP note
     if note.duration <= 0:
-        # TAP note
         screen.blit(constants.TAP_NOTE_IMAGE, (note.position_x, top_y))
         return
 
     # HOLD note
+    head_image, body_image, tail_image = assign_hold_note_images(note)
+
     note_length = note.duration * scroll_speed
-    head_h = constants.HOLD_NOTE_HEAD_IMAGE.get_height()
-    tail_h = constants.HOLD_NOTE_TAIL_IMAGE.get_height()
-    head_top = top_y  # head image top
-    tail_top = top_y - (note_length - head_h)  # tail grows upward from head
-    body_top = tail_top + tail_h  # top of first body tile
-    body_bottom = head_top  # bottom of last body tile
+    head_h = head_image.get_height()
+    tail_h = tail_image.get_height()
+    head_top = top_y
+    tail_top = top_y - (note_length - head_h)
+    body_top = tail_top + tail_h
+    body_bottom = head_top
 
     # Draw head
-    screen.blit(constants.HOLD_NOTE_HEAD_IMAGE, (note.position_x, top_y))
+    screen.blit(head_image, (note.position_x, top_y)) 
 
-    # Draw body (tile)
-    y = body_bottom - constants.HOLD_NOTE_BODY_IMAGE.get_height()
+    y = body_bottom - body_image.get_height() 
+
+    # Draw body
+    while y >= body_top - tail_h - constants.HOLD_NOTE_BODY_IMAGE.get_height(): 
+        screen.blit(body_image, (note.position_x, y)) 
+        y -= body_image.get_height() 
     
-    while y >= body_top - tail_h - constants.HOLD_NOTE_BODY_IMAGE.get_height():
-        screen.blit(constants.HOLD_NOTE_BODY_IMAGE, (note.position_x, y))
-        y -= constants.HOLD_NOTE_BODY_IMAGE.get_height()
+    # Draw tail  
+    screen.blit(tail_image, (note.position_x, top_y - note_length))
 
-    # Draw tail
-    screen.blit(constants.HOLD_NOTE_TAIL_IMAGE, (note.position_x, top_y - note_length))
+
+
+def assign_hold_note_images(note):
+    if note.hold_started or note.holding:
+        return (
+            constants.HOLD_NOTE_HEAD_IMAGE_TINTED,
+            constants.HOLD_NOTE_BODY_IMAGE_TINTED,
+            constants.HOLD_NOTE_TAIL_IMAGE_TINTED
+        )
+    else: 
+        return (
+            constants.HOLD_NOTE_HEAD_IMAGE,
+            constants.HOLD_NOTE_BODY_IMAGE,
+            constants.HOLD_NOTE_TAIL_IMAGE
+        )
+    
+def evaluate_hit(note, current_time_ms):
+    if note.duration == 0 and note.hit:
+        if abs(current_time_ms - note.time) < (constants.HIT_WINDOW/2):
+            return 300
+        elif abs(current_time_ms - note.time) < (constants.HIT_WINDOW/1.5):
+            return 150
+        elif abs(current_time_ms - note.time) < (constants.HIT_WINDOW):
+            return 50
+    elif note.hold_started or note.hold_complete:
+        if note.hold_started and note.holding and note.hold_complete:
+            return 300 + note.duration * .5
+        return 150
+    return 0
+    
