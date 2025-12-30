@@ -7,6 +7,7 @@ class HitObject:
         self.duration = float(duration)
         self.time = float(time)
         self.hit = False
+        self.miss = False
         self.position_x = 0
         self.hold_started = False
         self.holding = False
