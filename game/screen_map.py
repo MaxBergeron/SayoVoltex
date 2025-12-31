@@ -28,7 +28,7 @@ def map_loader(screen):
         }
 
 
-    hit_line_y = 640
+    hit_line_y = utils.scale_y(640)
     scroll_speed = constants.SELECTED_TILE.scroll_speed
 
     paused = False
@@ -36,6 +36,8 @@ def map_loader(screen):
     x_center = constants.BASE_W // 2
     clock = pygame.time.Clock()
 
+    hit_sound = pygame.mixer.Sound(constants.HIT_SOUND_PATH)
+    hit_sound.set_volume(constants.HIT_SOUND_VOLUME)
     hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
 
     for note in hit_object_data["HitObjects"]:
@@ -43,6 +45,7 @@ def map_loader(screen):
 
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
     player.play()
+    pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
     while True:
         clock.tick(120)
@@ -51,6 +54,10 @@ def map_loader(screen):
         if paused:
             map_mouse_pos = pygame.mouse.get_pos()
             screen.blit(dark_map_background, (0, 0))
+            for note in hit_object_data["HitObjects"]:
+                if note.hit or note.hold_complete or note.miss:
+                    continue
+                draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
             draw_lanes(screen, hit_line_y, x_center)
             for counter in counters.values():
                 counter.update(screen)
@@ -58,10 +65,7 @@ def map_loader(screen):
             for b in [continue_button, retry_button, exit_button]:
                 b.change_color(map_mouse_pos)
                 b.update(screen)
-            for note in hit_object_data["HitObjects"]:
-                if note.hit or note.hold_complete or note.miss:
-                    continue
-                draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
+
             pygame.display.flip()
 
             # Pause events
@@ -81,8 +85,6 @@ def map_loader(screen):
                         return states.MAP
                     elif exit_button.check_for_input(map_mouse_pos):
                         return states.PLAY
-                    
-
             continue  # skip the rest of the loop while paused
 
         # Update time
@@ -115,10 +117,12 @@ def map_loader(screen):
                         if abs(current_time_ms - note.time) <= constants.HIT_WINDOW * constants.MISS_WINDOW_RATIO:
                             if abs(current_time_ms - note.time) <= constants.HIT_WINDOW:
                                 note.hit = True
+                                hit_sound.play()
                                 evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                             else:
                                 print("clicked early")
                                 note.miss = True
+                                hit_sound.play()
                                 evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
 
@@ -199,8 +203,8 @@ def draw_lanes(screen, hit_line_y, x_center):
     # Horizontal hit line
     pygame.draw.line(
         screen, (255, 0, 0),
-        (utils.scale_x(x_center - 202), utils.scale_y(hit_line_y)),
-        (utils.scale_x(x_center + 202), utils.scale_y(hit_line_y)),
+        (utils.scale_x(x_center - 202), hit_line_y),
+        (utils.scale_x(x_center + 202), hit_line_y),
         max(1, utils.scale_y(10)),
     )
 

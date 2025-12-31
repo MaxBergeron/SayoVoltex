@@ -30,22 +30,22 @@ def load_assets():
     NOTE_H = scale_y(10)
 
     constants.TAP_NOTE_IMAGE = pygame.transform.scale(
-        pygame.image.load("assets/Skin/hit_note.png").convert_alpha(),
+        pygame.image.load("assets/skin/hit_note.png").convert_alpha(),
         (NOTE_W, NOTE_H)
     )
 
     constants.HOLD_NOTE_HEAD_IMAGE = pygame.transform.scale(
-        pygame.image.load("assets/Skin/hold_note_head.png").convert_alpha(),
+        pygame.image.load("assets/skin/hold_note_head.png").convert_alpha(),
         (NOTE_W, NOTE_H)
     )
 
     constants.HOLD_NOTE_BODY_IMAGE = pygame.transform.scale(
-        pygame.image.load("assets/Skin/hold_note_body.png").convert_alpha(),
+        pygame.image.load("assets/skin/hold_note_body.png").convert_alpha(),
         (NOTE_W, NOTE_H)
     )
 
     constants.HOLD_NOTE_TAIL_IMAGE = pygame.transform.scale(
-        pygame.image.load("assets/Skin/hold_note_tail.png").convert_alpha(),
+        pygame.image.load("assets/skin/hold_note_tail.png").convert_alpha(),
         (NOTE_W, NOTE_H)
     )
     constants.HOLD_NOTE_HEAD_IMAGE_TINTED = tint(constants.HOLD_NOTE_HEAD_IMAGE, (0, 200, 255))
