@@ -1,6 +1,8 @@
 import pygame, sys
 from game import button, states, constants, utils, music_player, get_game_objects, map_counters
 
+active_popup = None
+
 def map_loader(screen):
     pygame.display.set_caption(constants.SELECTED_TILE.title)
 
@@ -27,13 +29,15 @@ def map_loader(screen):
         "combo_counter": map_counters.ComboCounter()
         }
 
-
     hit_line_y = utils.scale_y(640)
     scroll_speed = constants.SELECTED_TILE.scroll_speed
 
     paused = False
 
     x_center = constants.BASE_W // 2
+    y_center = constants.BASE_H // 2
+    screen_center = (x_center, y_center)
+
     clock = pygame.time.Clock()
 
     hit_sound = pygame.mixer.Sound(constants.HIT_SOUND_PATH)
@@ -48,7 +52,7 @@ def map_loader(screen):
     pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
     while True:
-        clock.tick(120)
+        dt = clock.tick(120)
 
         # Pause handling
         if paused:
@@ -118,12 +122,12 @@ def map_loader(screen):
                             if abs(current_time_ms - note.time) <= constants.HIT_WINDOW:
                                 note.hit = True
                                 hit_sound.play()
-                                evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                             else:
                                 print("clicked early")
                                 note.miss = True
                                 hit_sound.play()
-                                evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
 
                     # HOLD note
@@ -131,8 +135,12 @@ def map_loader(screen):
                         if abs(current_time_ms - note.time) <= constants.HIT_WINDOW and not note.hold_started:
                             note.hold_started = True
                             note.holding = True
+                            hit_sound.play()
+
                         elif note.time < current_time_ms < note.time + note.duration and not note.hold_started:
                             note.holding = True
+                            hit_sound.play()
+
 
             elif event.type == pygame.KEYUP:
                 key_str = utils.get_action_from_key(event.key)
@@ -144,9 +152,9 @@ def map_loader(screen):
                     if note.duration > 0 and (note.hold_started or note.holding) and utils.convert_int_to_key(note.key) == key_str:
                         if abs(current_time_ms - (note.time + note.duration)) <= constants.HIT_WINDOW:
                             note.hold_complete = True
-                            evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                            hit_sound.play()
+                            evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                         note.holding = False
-
 
         for note in hit_object_data["HitObjects"]:
             if note.hit or note.miss:
@@ -154,20 +162,26 @@ def map_loader(screen):
             # TAP note auto-miss
             if note.duration == 0 and current_time_ms - note.time > constants.HIT_WINDOW:
                 note.miss = True
-                evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
 
             # HOLD note auto-miss if never started
             elif note.duration > 0 and not note.hold_started and current_time_ms > note.time + note.duration + constants.HIT_WINDOW:
                 note.miss = True
-                evaluate_hit(note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
-
-        # --- Draw notes ---
+        # Draw notes
         for note in hit_object_data["HitObjects"]:
             if note.hit or note.hold_complete or note.miss:
                 continue
             draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
+
+        global active_popup
+        if active_popup:
+            screen.blit(active_popup["image"], active_popup["rect"])
+            active_popup["timer"] -= dt
+            if active_popup["timer"] <= 0:
+                active_popup = None
 
         pygame.display.flip()
 
@@ -265,7 +279,7 @@ def assign_hold_note_images(note):
             constants.HOLD_NOTE_TAIL_IMAGE
         )
     
-def evaluate_hit(note, current_time_ms, point_counter, percentage_counter, combo_counter):
+def evaluate_hit(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
     hit_percent = 0
 
     if note.duration == 0 and note.hit:
@@ -273,29 +287,46 @@ def evaluate_hit(note, current_time_ms, point_counter, percentage_counter, combo
             hit_percent = 100
             combo_counter.value += 1
             point_counter.value += 300
+            spawn_popup("perfect")
+
         elif abs(current_time_ms - note.time) <= (constants.HIT_WINDOW/1.5):
             hit_percent = 50
             combo_counter.value += 1
             point_counter.value += 150
+            spawn_popup("good")
+
         elif abs(current_time_ms - note.time) <= (constants.HIT_WINDOW):
             hit_percent = 25
             combo_counter.value += 1
             point_counter.value += 50
+            spawn_popup("ok")
     elif note.hold_started or note.hold_complete:
         if note.hold_started and note.holding and note.hold_complete:
             hit_percent = 100
             combo_counter.value += (2 + int(note.duration * 0.5 / 300))
             point_counter.value += 300 + note.duration * 0.5
+            spawn_popup("perfect")
         else:
             hit_percent = 50
             combo_counter.value += 1
             point_counter.value +=150
+            spawn_popup("good")
     else:
-        print("miss")
         hit_percent = 0
         combo_counter.value = 0
-        
+        spawn_popup("miss")
+
 
     point_counter.update_text_surface()
     combo_counter.update_text_surface()
     percentage_counter.add_hit(hit_percent)
+
+def spawn_popup(type):
+    global active_popup
+    popup_image = constants.ACCURACY_POPUPS[type]
+    popup_rect = popup_image.get_rect(center=utils.scale_pos(constants.BASE_W // 2, constants.BASE_H // 2))
+    active_popup = {
+        "image": popup_image,
+        "rect": popup_rect,
+        "timer": 300  
+    }

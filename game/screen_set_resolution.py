@@ -3,7 +3,7 @@ from game import button, constants, states, utils
 
 def set_resolution_menu(screen):
     pygame.display.set_caption("Set Resolution")
-    set_resolution_background = pygame.image.load("assets/set_resolution_background.png")
+    set_resolution_background = pygame.image.load("assets/backgrounds/set_resolution_background.png")
     set_resolution_background = pygame.transform.scale(set_resolution_background, screen.get_size()).convert()
 
     waiting_for_selection = False

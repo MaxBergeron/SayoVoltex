@@ -6,7 +6,7 @@ Version: Easy
 Length: 156
 Scroll_Speed: 0.35
 BPM: 120
-Audio_Lead_In: 1000
+Audio_Lead_In: 0
 Image_File_Path: bg.png
 
 

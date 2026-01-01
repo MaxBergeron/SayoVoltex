@@ -5,13 +5,13 @@ from game import button, states, utils, constants, song_tile, map_details
 
 def play_menu(screen):
     pygame.display.set_caption("Play")
-    play_background = pygame.image.load("assets/play_background.jpg")
+    play_background = pygame.image.load("assets/backgrounds/play_background.jpg")
     play_background = pygame.transform.scale(play_background, screen.get_size()).convert()
 
     play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
     play_text_rect = play_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
 
-    song_tile_cover = pygame.image.load("assets/song_tile_cover.png").convert_alpha()
+    song_tile_cover = pygame.image.load("assets/images/song_tile_cover.png").convert_alpha()
     song_tile_cover = pygame.transform.scale(song_tile_cover, (utils.scale_x(225), utils.scale_y(75)))
 
     back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 

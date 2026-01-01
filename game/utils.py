@@ -51,6 +51,26 @@ def load_assets():
     constants.HOLD_NOTE_HEAD_IMAGE_TINTED = tint(constants.HOLD_NOTE_HEAD_IMAGE, (0, 200, 255))
     constants.HOLD_NOTE_BODY_IMAGE_TINTED = tint(constants.HOLD_NOTE_BODY_IMAGE, (0, 200, 255))
     constants.HOLD_NOTE_TAIL_IMAGE_TINTED = tint(constants.HOLD_NOTE_TAIL_IMAGE, (0, 200, 255))
+    
+    constants.ACCURACY_POPUPS = {
+        "perfect": pygame.transform.scale(
+            pygame.image.load("assets/images/perfect_popup.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
+        ),
+        "good": pygame.transform.scale(
+            pygame.image.load("assets/images/good_popup.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
+        ),
+        "ok": pygame.transform.scale(
+            pygame.image.load("assets/images/ok_popup.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
+        ),
+        "miss": pygame.transform.scale(
+            pygame.image.load("assets/images/miss_popup.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
+        ),
+    }
+    
 
 def tint(surface, color):
     s = surface.copy()

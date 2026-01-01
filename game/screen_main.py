@@ -7,7 +7,7 @@ from game import button, states, utils, constants
 
 def main_menu(screen):
     pygame.display.set_caption("Menu")  
-    main_menu_background = pygame.image.load("assets/main_menu_background.jpg")
+    main_menu_background = pygame.image.load("assets/backgrounds/main_menu_background.jpg")
     main_menu_background = pygame.transform.scale(main_menu_background, screen.get_size()).convert()
 
     menu_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("MAIN MENU", True, "#b68f40")

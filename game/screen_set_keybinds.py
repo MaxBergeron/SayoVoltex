@@ -5,16 +5,16 @@ from game import button, constants, states, utils
 
 def set_keybinds_menu(screen):
     pygame.display.set_caption("Set Keybinds")
-    set_keybinds_background = pygame.image.load("assets/set_keybinds_background.png")
+    set_keybinds_background = pygame.image.load("assets/backgrounds/set_keybinds_background.png")
     set_keybinds_background = pygame.transform.scale(set_keybinds_background, screen.get_size()).convert()
-    sayodevice_template_image = pygame.image.load("assets/template_sayodevice.png").convert_alpha()
+    sayodevice_template_image = pygame.image.load("assets/images/template_sayodevice.png").convert_alpha()
     sayodevice_template_image = pygame.transform.scale(sayodevice_template_image, (utils.scale_x(500), utils.scale_y(500)))
 
-    set_key_button_image = pygame.image.load("assets/clear_box.png").convert_alpha()
+    set_key_button_image = pygame.image.load("assets/images/clear_box.png").convert_alpha()
     set_key_button_image = pygame.transform.scale(set_key_button_image, (utils.scale_x(138), utils.scale_y(113)))
     #set_key_button_image.set_alpha(200)
 
-    set_wheel_button_image = pygame.image.load("assets/clear_box.png").convert_alpha()
+    set_wheel_button_image = pygame.image.load("assets/images/clear_box.png").convert_alpha()
     set_wheel_button_image = pygame.transform.scale(set_wheel_button_image, (utils.scale_x(80), utils.scale_y(126)))
     #set_wheel_button_image.set_alpha(200)
 
