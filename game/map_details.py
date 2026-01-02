@@ -11,7 +11,7 @@ class MapDetails:
         self.scroll_speed = 0.00
         self.BPM = 0
 
-        self.image = pygame.image.load("assets/map_details_image.png").convert_alpha()
+        self.image = pygame.image.load("assets/images/map_details_image.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (utils.scale_x(400), utils.scale_y(250)))
 
     def update(self, screen):

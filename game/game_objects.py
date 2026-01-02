@@ -4,8 +4,8 @@ from game import constants, utils
 class HitObject:
     def __init__(self, key, duration, time):
         self.key = int(key)
-        self.duration = float(duration)
-        self.time = float(time)
+        self.duration = int(duration)
+        self.time = int(time)
         self.hit = False
         self.miss = False
         self.position_x = 0
@@ -13,16 +13,13 @@ class HitObject:
         self.holding = False
         self.hold_complete = False
 
-    def __repr__(self):
-        return f"HitObject(key={self.key}, duration={self.duration}, time={self.time})"
-
-
 class LaserObject:
-    def __init__(self, continue_chain, full_swing, position, time):
-        self.continue_chain = bool(int(continue_chain))
-        self.full_swing = int(full_swing)
-        self.position = int(position)
-        self.time = float(time)
- 
-    def __repr__(self):
-        return f"LaserObject(chain={self.continue_chain}, pos={self.position}, time={self.time})"
+    def __init__(self, start_time, end_time, start_pos, end_pos):
+        self.start_time = int(start_time)
+        self.end_time = int(end_time)
+        self.start_pos = float(LaserObject.normalize_position(int(start_pos)))
+        self.end_pos = float(LaserObject.normalize_position(int(end_pos)))
+
+    def normalize_position(pos):
+        norm_pos = (pos - 1) / 7
+        return norm_pos

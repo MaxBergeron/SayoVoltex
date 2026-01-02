@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, constants, utils, music_player, get_game_objects, map_counters
+from game import button, states, constants, utils, music_player, get_game_objects, map_counters, laser_manager, game_objects
 
 active_popup = None
 
@@ -29,14 +29,13 @@ def map_loader(screen):
         "combo_counter": map_counters.ComboCounter()
         }
 
-    hit_line_y = utils.scale_y(640)
     scroll_speed = constants.SELECTED_TILE.scroll_speed
 
     paused = False
 
     x_center = constants.BASE_W // 2
     y_center = constants.BASE_H // 2
-    screen_center = (x_center, y_center)
+
 
     clock = pygame.time.Clock()
 
@@ -51,6 +50,13 @@ def map_loader(screen):
     player.play()
     pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
+
+
+    for x in hit_object_data["LaserObjects"]:
+        laser = x
+
+
+
     while True:
         dt = clock.tick(120)
 
@@ -61,8 +67,8 @@ def map_loader(screen):
             for note in hit_object_data["HitObjects"]:
                 if note.hit or note.hold_complete or note.miss:
                     continue
-                draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
-            draw_lanes(screen, hit_line_y, x_center)
+                draw_note(screen, note, scroll_speed, current_time_ms)
+            draw_lanes(screen, x_center)
             for counter in counters.values():
                 counter.update(screen)
             pause_menu(screen, player)
@@ -96,7 +102,7 @@ def map_loader(screen):
 
         # Draw background and lanes
         screen.blit(dark_map_background, (0, 0))
-        draw_lanes(screen, hit_line_y, x_center)
+        draw_lanes(screen, x_center)
         for counter in counters.values():
             counter.update(screen)
 
@@ -174,7 +180,7 @@ def map_loader(screen):
         for note in hit_object_data["HitObjects"]:
             if note.hit or note.hold_complete or note.miss:
                 continue
-            draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms)
+            draw_note(screen, note, scroll_speed, current_time_ms)
 
         global active_popup
         if active_popup:
@@ -183,11 +189,17 @@ def map_loader(screen):
             if active_popup["timer"] <= 0:
                 active_popup = None
 
+
+
+        laser_manager.draw_laser(screen, laser, current_time_ms)
+
+
+
         pygame.display.flip()
 
 
 
-def draw_lanes(screen, hit_line_y, x_center):
+def draw_lanes(screen, x_center):
     lane_offsets = [-150, -50, 50, 150]
     lane_positions = [x_center + offset for offset in lane_offsets]
 
@@ -217,13 +229,13 @@ def draw_lanes(screen, hit_line_y, x_center):
     # Horizontal hit line
     pygame.draw.line(
         screen, (255, 0, 0),
-        (utils.scale_x(x_center - 202), hit_line_y),
-        (utils.scale_x(x_center + 202), hit_line_y),
+        (utils.scale_x(x_center - 202), utils.scale_x(constants.HIT_LINE_Y)),
+        (utils.scale_x(x_center + 202), utils.scale_x(constants.HIT_LINE_Y)),
         max(1, utils.scale_y(10)),
     )
 
-def draw_note(screen, note, hit_line_y, scroll_speed, current_time_ms):
-    top_y = hit_line_y - (note.time - current_time_ms) * scroll_speed
+def draw_note(screen, note, scroll_speed, current_time_ms):
+    top_y = utils.scale_x(constants.HIT_LINE_Y) - (note.time - current_time_ms) * scroll_speed
 
     # TAP note
     if note.duration <= 0:
