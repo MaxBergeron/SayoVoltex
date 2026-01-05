@@ -82,9 +82,7 @@ def convert_int_to_key(key_int):
     key_map = {
         1: "key_1",
         2: "key_2",
-        3: "key_3",
-        4: "key_CCW",
-        5: "key_CW"
+        3: "key_3"
     }
     return key_map.get(key_int, None)
 

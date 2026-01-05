@@ -16,4 +16,5 @@ Image_File_Path:
 // Laser Object Ordering
 // start time, end time, start position, end position
 [LaserObjects]
-1000, 2000, 1, 8
+1000, 15000, 1, 8
+

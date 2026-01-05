@@ -19,6 +19,7 @@ class LaserObject:
         self.end_time = int(end_time)
         self.start_pos = float(LaserObject.normalize_position(int(start_pos)))
         self.end_pos = float(LaserObject.normalize_position(int(end_pos)))
+        self.hit = False
 
     def normalize_position(pos):
         norm_pos = (pos - 1) / 7

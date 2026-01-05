@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, constants, utils, music_player, get_game_objects, map_counters, laser_manager, game_objects
+from game import button, states, constants, utils, music_player, get_game_objects, map_counters, laser_manager, game_objects, laser_cursor
 
 active_popup = None
 
@@ -28,6 +28,8 @@ def map_loader(screen):
         "percentage_counter": map_counters.PercentageCounter(),
         "combo_counter": map_counters.ComboCounter()
         }
+    
+    cursor = laser_cursor.LaserCursor()
 
     scroll_speed = constants.SELECTED_TILE.scroll_speed
 
@@ -45,20 +47,16 @@ def map_loader(screen):
 
     for note in hit_object_data["HitObjects"]:
         note.position_x = utils.scale_x(x_center - 150) + (note.key - 1) * utils.scale_x(100)
+    for x in hit_object_data["LaserObjects"]:
+        laser = x
 
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
     player.play()
     pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
-
-
-    for x in hit_object_data["LaserObjects"]:
-        laser = x
-
-
-
     while True:
         dt = clock.tick(120)
+        knob_input = 0
 
         # Pause handling
         if paused:
@@ -68,6 +66,8 @@ def map_loader(screen):
                 if note.hit or note.hold_complete or note.miss:
                     continue
                 draw_note(screen, note, scroll_speed, current_time_ms)
+            for laser in hit_object_data["LaserObjects"]:
+                laser_manager.draw_laser(screen, laser, current_time_ms)
             draw_lanes(screen, x_center)
             for counter in counters.values():
                 counter.update(screen)
@@ -130,7 +130,6 @@ def map_loader(screen):
                                 hit_sound.play()
                                 evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                             else:
-                                print("clicked early")
                                 note.miss = True
                                 hit_sound.play()
                                 evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
@@ -146,6 +145,21 @@ def map_loader(screen):
                         elif note.time < current_time_ms < note.time + note.duration and not note.hold_started:
                             note.holding = True
                             hit_sound.play()
+                
+                if event.key == utils.key_bindings["key_CW"]:
+                    knob_input += 1
+                    cursor.update_movement(knob_input, (dt / 1000))
+                elif event.key == utils.key_bindings["key_CCW"]:
+                    knob_input -= 1
+                    cursor.update_movement(knob_input, (dt / 1000))
+
+
+
+                for laser in hit_object_data["LaserObjects"]:
+                    if laser.hit:
+                        continue
+
+                        # LASER object
 
 
             elif event.type == pygame.KEYUP:
@@ -182,6 +196,13 @@ def map_loader(screen):
                 continue
             draw_note(screen, note, scroll_speed, current_time_ms)
 
+        for laser in hit_object_data["LaserObjects"]:
+            laser_manager.draw_laser(screen, laser, current_time_ms)
+
+        cursor.draw(screen)
+
+
+        # Draw accuracy popups
         global active_popup
         if active_popup:
             screen.blit(active_popup["image"], active_popup["rect"])
@@ -189,9 +210,6 @@ def map_loader(screen):
             if active_popup["timer"] <= 0:
                 active_popup = None
 
-
-
-        laser_manager.draw_laser(screen, laser, current_time_ms)
 
 
 

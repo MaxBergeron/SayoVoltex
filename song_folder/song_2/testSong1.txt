@@ -46,11 +46,14 @@ Image_File_Path: bg.png
 1, 0, 11625
 
 // Laser Object Ordering
-// continue chain (0 false 1 true), start position, time position
+// start time, end time, start position, end position
 [LaserObjects]
-1, 1, 0, 800
-1, 0, 200, 1200
-0, 0, 100, 2000
-1, 0, 0, 2300
-1, 0, 400, 2600
-0, 2, 0, 3000
+1000, 2000, 1, 8
+2000, 3000, 8, 8
+4000, 4500, 1, 4
+4500, 4700, 4, 1
+5000, 5200, 1, 8
+5300, 5400, 8, 1
+6000, 6500, 1, 7
+6500, 7000, 7, 8
+7000, 7200, 8, 1
