@@ -4,7 +4,7 @@ Artist: Yukopi
 Creator: Corgo
 Version: Easy
 Length: 156
-Scroll_Speed: 0.35
+Scroll_Speed: 0.60
 BPM: 120
 Audio_Lead_In: 0
 Image_File_Path: bg.png
@@ -46,9 +46,12 @@ Image_File_Path: bg.png
 // Laser Object Ordering
 // continue chain (0 false, 1 true), full swing (0 false, 1 right swing, 2 left swing), start position, time position
 [LaserObjects]
-1, 1, 0, 800
-1, 0, 200, 1200
-0, 0, 100, 2000
-1, 0, 0, 2300
-1, 0, 400, 2600
-0, 2, 0, 3000
+1000, 2000, 1, 8
+2000, 3000, 8, 8
+4000, 4500, 1, 4
+4500, 4700, 4, 1
+5000, 5200, 1, 8
+5300, 5400, 8, 1
+6000, 6500, 1, 7
+6500, 7000, 7, 8
+7000, 7200, 8, 1

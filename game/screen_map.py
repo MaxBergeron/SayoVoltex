@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, constants, utils, music_player, get_game_objects, map_counters, laser_manager, game_objects, laser_cursor
+from game import button, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
 
 active_popup = None
 
@@ -34,6 +34,8 @@ def map_loader(screen):
     scroll_speed = constants.SELECTED_TILE.scroll_speed
 
     paused = False
+    global active_popup
+
 
     x_center = constants.BASE_W // 2
     y_center = constants.BASE_H // 2
@@ -61,21 +63,31 @@ def map_loader(screen):
         # Pause handling
         if paused:
             map_mouse_pos = pygame.mouse.get_pos()
+
             screen.blit(dark_map_background, (0, 0))
+            draw_lanes(screen, x_center)
+
             for note in hit_object_data["HitObjects"]:
                 if note.hit or note.hold_complete or note.miss:
                     continue
-                draw_note(screen, note, scroll_speed, current_time_ms)
+                note.draw(screen, current_time_ms)
+
             for laser in hit_object_data["LaserObjects"]:
-                laser_manager.draw_laser(screen, laser, current_time_ms)
-            draw_lanes(screen, x_center)
+                laser.draw(screen)
+
+
             for counter in counters.values():
                 counter.update(screen)
+
+            cursor.draw(screen)
+
+            if active_popup:
+                screen.blit(active_popup["image"], active_popup["rect"])
+
             pause_menu(screen, player)
             for b in [continue_button, retry_button, exit_button]:
                 b.change_color(map_mouse_pos)
                 b.update(screen)
-
             pygame.display.flip()
 
             # Pause events
@@ -100,7 +112,7 @@ def map_loader(screen):
         # Update time
         current_time_ms = player.get_position() * 1000
 
-        # Draw background and lanes
+        # Draw background,lanes, and counwers
         screen.blit(dark_map_background, (0, 0))
         draw_lanes(screen, x_center)
         for counter in counters.values():
@@ -194,16 +206,15 @@ def map_loader(screen):
         for note in hit_object_data["HitObjects"]:
             if note.hit or note.hold_complete or note.miss:
                 continue
-            draw_note(screen, note, scroll_speed, current_time_ms)
+            note.draw(screen, current_time_ms)
 
         for laser in hit_object_data["LaserObjects"]:
-            laser_manager.draw_laser(screen, laser, current_time_ms)
-
+            laser.update_points(current_time_ms)
+            laser.draw(screen)
         cursor.draw(screen)
 
 
         # Draw accuracy popups
-        global active_popup
         if active_popup:
             screen.blit(active_popup["image"], active_popup["rect"])
             active_popup["timer"] -= dt

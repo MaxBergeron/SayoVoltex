@@ -17,7 +17,6 @@ class SongTile:
         self.version = parsed_metadata.get("Version", "NULL") 
         self.length = int(parsed_metadata.get("Length") or 0)
         self.scroll_speed = float(parsed_metadata.get("Scroll_Speed") or 0)
-        constants.SCROLL_SPEED = self.scroll_speed
         self.BPM = int(parsed_metadata.get("BPM") or 0)
         self.audio_lead_in = int(parsed_metadata.get("Audio_Lead_In") or 0)
 
