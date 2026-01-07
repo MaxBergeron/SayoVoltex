@@ -158,21 +158,13 @@ def map_loader(screen):
                             note.holding = True
                             hit_sound.play()
                 
+                # Handle cursor movement
+                knob_input = 0
+                keys = pygame.key.get_pressed()
                 if event.key == utils.key_bindings["key_CW"]:
                     knob_input += 1
-                    cursor.update_movement(knob_input, (dt / 1000))
                 elif event.key == utils.key_bindings["key_CCW"]:
                     knob_input -= 1
-                    cursor.update_movement(knob_input, (dt / 1000))
-
-
-
-                for laser in hit_object_data["LaserObjects"]:
-                    if laser.hit:
-                        continue
-
-                        # LASER object
-
 
             elif event.type == pygame.KEYUP:
                 key_str = utils.get_action_from_key(event.key)
@@ -187,6 +179,11 @@ def map_loader(screen):
                             hit_sound.play()
                             evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                         note.holding = False
+
+        
+
+        # Update cursor position
+        cursor.update_movement(knob_input, dt / 1000)
 
         for note in hit_object_data["HitObjects"]:
             if note.hit or note.miss:
@@ -210,8 +207,16 @@ def map_loader(screen):
 
         for laser in hit_object_data["LaserObjects"]:
             laser.update_points(current_time_ms)
+            bounds = laser.get_x_at_y(current_time_ms, constants.HIT_LINE_Y)
+            if bounds is not None:
+                min_x, max_x = bounds
+                if (cursor.left_edge < min_x and cursor.right_edge < min_x) or (cursor.left_edge > max_x and cursor.right_edge > max_x):
+                    print(False)
+                else: 
+                    print(True)
             laser.draw(screen)
         cursor.draw(screen)
+
 
 
         # Draw accuracy popups
@@ -263,38 +268,6 @@ def draw_lanes(screen, x_center):
         max(1, utils.scale_y(10)),
     )
 
-def draw_note(screen, note, scroll_speed, current_time_ms):
-    top_y = utils.scale_x(constants.HIT_LINE_Y) - (note.time - current_time_ms) * scroll_speed
-
-    # TAP note
-    if note.duration <= 0:
-        screen.blit(constants.TAP_NOTE_IMAGE, (note.position_x, top_y))
-        return
-
-    # HOLD note
-    head_image, body_image, tail_image = assign_hold_note_images(note)
-
-    note_length = note.duration * scroll_speed
-    head_h = head_image.get_height()
-    tail_h = tail_image.get_height()
-    head_top = top_y
-    tail_top = top_y - (note_length - head_h)
-    body_top = tail_top + tail_h
-    body_bottom = head_top
-
-    # Draw head
-    screen.blit(head_image, (note.position_x, top_y)) 
-
-    y = body_bottom - body_image.get_height() 
-
-    # Draw body
-    while y >= body_top - tail_h - constants.HOLD_NOTE_BODY_IMAGE.get_height(): 
-        screen.blit(body_image, (note.position_x, y)) 
-        y -= body_image.get_height() 
-    
-    # Draw tail  
-    screen.blit(tail_image, (note.position_x, top_y - note_length))
-
 def pause_menu(screen, player):
     player.pause()
 
@@ -305,20 +278,6 @@ def pause_menu(screen, player):
     popup.fill((50, 50, 50, 180))
 
     screen.blit(popup, (popup_x, popup_y))
-
-def assign_hold_note_images(note):
-    if note.hold_started or note.holding:
-        return (
-            constants.HOLD_NOTE_HEAD_IMAGE_TINTED,
-            constants.HOLD_NOTE_BODY_IMAGE_TINTED,
-            constants.HOLD_NOTE_TAIL_IMAGE_TINTED
-        )
-    else: 
-        return (
-            constants.HOLD_NOTE_HEAD_IMAGE,
-            constants.HOLD_NOTE_BODY_IMAGE,
-            constants.HOLD_NOTE_TAIL_IMAGE
-        )
     
 def evaluate_hit(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
     hit_percent = 0

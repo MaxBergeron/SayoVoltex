@@ -1,4 +1,4 @@
-import pygame
+import pygame, math
 from game import constants, utils
 
 class LaserCursor:
@@ -7,37 +7,54 @@ class LaserCursor:
         self.length = utils.scale_x(100)
 
         self.velocity = 0.0
-        self.acceleration = 6.7  # how fast it reacts to input
-        self.friction = 0.85     # how fast it slows down per frame
+        self.acceleration = 6    # per input impulse (KEY VALUE)
+        self.damping = 100.0     # decay rate
 
         self.left_boundary = utils.scale_x(constants.BASE_W) // 2 - utils.scale_x(200)
-        self.right_boundary = utils.scale_x(constants.BASE_W) // 2 + utils.scale_x(200)
+        self.right_boundary = utils.scale_x(constants.BASE_W) // 2 + utils.scale_x(200) - self.length
 
         self.value = 0.0
         self.position_y = utils.scale_y(constants.HIT_LINE_Y)
         self.position_x = self.left_boundary
 
+        self.left_edge = self.position_x
+        self.right_edge = self.position_x + self.length
+
     def update_movement(self, knob_input, delta_time):
+        """
+        Smooth knob movement with immediate response to direction changes.
+        knob_input: -1, 0, or +1
+        delta_time: seconds elapsed
+        """
+        ACCEL = self.acceleration
+        DAMPING = self.damping
 
-        # --- Instant direction change ---
-        if (self.velocity > 0 and knob_input < 0) or (self.velocity < 0 and knob_input > 0):
-            self.velocity = 0
+        if knob_input != 0:
+            # If changing direction, apply partial velocity reversal
+            if self.velocity * knob_input < 0:
+                # Reverse some of the velocity instead of ignoring input
+                self.velocity *= 0.5  # reduce current velocity
+            # Apply input impulse
+            self.velocity += knob_input * ACCEL
+        else:
+            # Apply friction decay when idle
+            self.velocity *= math.exp(-DAMPING * delta_time)
 
-        # --- Apply acceleration (impulse per input) ---
-        self.velocity += knob_input * self.acceleration  # delta_time removed here
-
-        # --- Apply friction ---
-        self.velocity *= self.friction
-
-        # --- Update normalized position (0 to 1) ---
+        # Integrate position
         self.value += self.velocity * delta_time
 
-        # --- Clamp within normalized boundaries ---
-        self.value = max(0.0, min(1.0, self.value))
+        # Clamp boundaries
+        if self.value <= 0.0:
+            self.value = 0.0
+            if self.velocity < 0: self.velocity = 0
+        elif self.value >= 1.0:
+            self.value = 1.0
+            if self.velocity > 0: self.velocity = 0
 
-        # --- Convert normalized value to screen X ---
+        # Convert normalized value to screen X
         self.position_x = self.left_boundary + self.value * (self.right_boundary - self.left_boundary)
-
+        self.left_edge = self.position_x
+        self.right_edge = self.position_x + self.length
 
 
 

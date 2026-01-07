@@ -178,6 +178,48 @@ class LaserObject:
 
         screen.blit(laser_surf, (min_x, min_y))
 
+    def get_x_at_y(self, current_time, y):
+        """
+        Returns the left and right X positions of the laser at a specific Y (vertical line)
+        based on the current trapezoid shape.
+        """
+        self.update_points(current_time)
+    
+        if not self.points or len(self.points) < 4:
+            return (None, None)
+        if current_time < self.start_time or current_time > self.end_time:
+            return
+
+        # We'll check each edge of the polygon and see if it crosses Y
+        left_x = None
+        right_x = None
+
+        for i in range(len(self.points)):
+            p1 = self.points[i]
+            p2 = self.points[(i + 1) % len(self.points)]
+
+            y1, y2 = p1[1], p2[1]
+            x1, x2 = p1[0], p2[0]
+
+            # If the edge crosses the horizontal line y
+            if (y1 <= y <= y2) or (y2 <= y <= y1):
+                # Linear interpolation to find X at this Y
+                if y2 - y1 != 0:
+                    t = (y - y1) / (y2 - y1)
+                    x_at_y = x1 + t * (x2 - x1)
+                else:
+                    x_at_y = x1
+
+                if left_x is None or x_at_y < left_x:
+                    left_x = x_at_y
+                if right_x is None or x_at_y > right_x:
+                    right_x = x_at_y
+
+        return (left_x, right_x)
+
+
+
+
     @staticmethod
     def y_from_time(note_time, current_time):
         return constants.HIT_LINE_Y - (note_time - current_time) * constants.SCROLL_SPEED
