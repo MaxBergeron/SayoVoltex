@@ -66,17 +66,39 @@ class LaserObject:
     def __init__(self, start_time, end_time, start_pos, end_pos, width=50):
         self.start_time = int(start_time)
         self.end_time = int(end_time)
-        self.start_pos = float(self.normalize_position(start_pos))
-        self.end_pos = float(self.normalize_position(end_pos))
+        self.duration = self.end_time - self.start_time
 
-        self.hit = False
-        self.complete = False
+        start_pos = int(start_pos)
+        end_pos = int(end_pos)
+        self.start_pos = self.normalize_position(start_pos)
+        self.end_pos = self.normalize_position(end_pos)
+
+        if (end_pos - start_pos) > 0:
+            self.direction = "right"
+        elif (end_pos - start_pos) < 0:
+            self.direction = "left"
+        else:
+            self.direction = "none"
+
+        self.prev_laser = None
+        self.next_laser = None
+        self.is_chained_from_prev = False
+
+        self.started = False
+        self.miss = False
+        self.completed = False
+
+        self.holding = False
+        self.hold_completed = False
+        self.total_hold_time = 0
+
+        self.last_tick_time = None
+        self.total_hold_time = 0
 
         self.width = utils.scale_x(width)
         self.half_width = utils.scale_x(width) / 2
-        self.color = pygame.Color(constants.LASER_COLOR)
-        self.color.a = 180 # alpha value
 
+        self.color = None
 
         self.points = []
 
@@ -93,7 +115,7 @@ class LaserObject:
         end_y = self.y_from_time(self.end_time, current_time)
 
         if end_y > utils.scale_y(constants.HIT_LINE_Y):  # off the bottom of the screen
-            self.complete = True
+            self.completed = True
 
         dx = end_x - start_x
         dy = end_y - start_y
@@ -127,7 +149,7 @@ class LaserObject:
                         (start_x - self.half_width, start_y), # Head left
                         (end_x + self.half_width, end_y), # Tail right
                         (end_x - self.half_width, end_y), # Tail left
-                        (end_x + self.half_width, end_y - offset) # Tail offset
+                        (end_x - self.half_width, end_y - offset) # Tail offset
                     ]
             # Shallow slope Right
             elif going_right:
@@ -161,8 +183,10 @@ class LaserObject:
             ]
 
     def draw(self, screen):
-        if not self.points or self.complete:
+        if not self.points or self.completed:
             return
+        
+        self.assign_laser_color()
 
         # Handle transparency 
         min_x = min(p[0] for p in self.points)
@@ -188,7 +212,7 @@ class LaserObject:
         if not self.points or len(self.points) < 4:
             return (None, None)
         if current_time < self.start_time or current_time > self.end_time:
-            return
+            return (None, None)
 
         # We'll check each edge of the polygon and see if it crosses Y
         left_x = None
@@ -217,9 +241,6 @@ class LaserObject:
 
         return (left_x, right_x)
 
-
-
-
     @staticmethod
     def y_from_time(note_time, current_time):
         return constants.HIT_LINE_Y - (note_time - current_time) * constants.SCROLL_SPEED
@@ -232,3 +253,14 @@ class LaserObject:
         laser_width = utils.scale_x(50)
         half_laser_width = laser_width // 2
         return (left_lane + half_laser_width) + norm * ((right_lane - half_laser_width) - (left_lane + half_laser_width))
+    
+    def assign_laser_color(self):
+        if self.is_chained_from_prev and self.prev_laser:
+            self.color = self.prev_laser.color
+        else:
+            if self.direction == "right":
+                self.color = pygame.Color(constants.LASER_COLOR_GREEN)
+            else:
+                self.color = pygame.Color(constants.LASER_COLOR_RED)
+
+        self.color.a = 180

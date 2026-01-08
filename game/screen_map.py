@@ -47,10 +47,11 @@ def map_loader(screen):
     hit_sound.set_volume(constants.HIT_SOUND_VOLUME)
     hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
 
+    laser_objects = hit_object_data["LaserObjects"]
+    chain_lasers(laser_objects)
+
     for note in hit_object_data["HitObjects"]:
         note.position_x = utils.scale_x(x_center - 150) + (note.key - 1) * utils.scale_x(100)
-    for x in hit_object_data["LaserObjects"]:
-        laser = x
 
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
     player.play()
@@ -140,12 +141,11 @@ def map_loader(screen):
                             if abs(current_time_ms - note.time) <= constants.HIT_WINDOW:
                                 note.hit = True
                                 hit_sound.play()
-                                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                                evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                             else:
                                 note.miss = True
                                 hit_sound.play()
-                                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
-
+                                evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
                     # HOLD note
                     elif utils.convert_int_to_key(note.key) == key_str:
@@ -177,7 +177,7 @@ def map_loader(screen):
                         if abs(current_time_ms - (note.time + note.duration)) <= constants.HIT_WINDOW:
                             note.hold_complete = True
                             hit_sound.play()
-                            evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                            evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
                         note.holding = False
 
         
@@ -191,13 +191,13 @@ def map_loader(screen):
             # TAP note auto-miss
             if note.duration == 0 and current_time_ms - note.time > constants.HIT_WINDOW:
                 note.miss = True
-                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
 
             # HOLD note auto-miss if never started
             elif note.duration > 0 and not note.hold_started and current_time_ms > note.time + note.duration + constants.HIT_WINDOW:
                 note.miss = True
-                evaluate_hit(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
 
         # Draw notes
         for note in hit_object_data["HitObjects"]:
@@ -207,14 +207,8 @@ def map_loader(screen):
 
         for laser in hit_object_data["LaserObjects"]:
             laser.update_points(current_time_ms)
-            bounds = laser.get_x_at_y(current_time_ms, constants.HIT_LINE_Y)
-            if bounds is not None:
-                min_x, max_x = bounds
-                if (cursor.left_edge < min_x and cursor.right_edge < min_x) or (cursor.left_edge > max_x and cursor.right_edge > max_x):
-                    print(False)
-                else: 
-                    print(True)
             laser.draw(screen)
+            evaluate_laser(screen, laser, cursor, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
         cursor.draw(screen)
 
 
@@ -279,7 +273,7 @@ def pause_menu(screen, player):
 
     screen.blit(popup, (popup_x, popup_y))
     
-def evaluate_hit(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
+def evaluate_note(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
     hit_percent = 0
 
     if note.duration == 0 and note.hit:
@@ -321,6 +315,62 @@ def evaluate_hit(screen, note, current_time_ms, point_counter, percentage_counte
     combo_counter.update_text_surface()
     percentage_counter.add_hit(hit_percent)
 
+def evaluate_laser(screen, laser, cursor, current_time_ms, point_counter, percentage_counter, combo_counter):
+    if laser.miss or laser.completed or current_time_ms < laser.start_time:
+        return
+    
+    percent = 0
+
+    min_x, max_x = laser.get_x_at_y(current_time_ms, constants.HIT_LINE_Y)
+    if min_x is None or max_x is None:
+        return
+
+    overlap = not (cursor.right_edge < min_x or cursor.left_edge > max_x)
+    # Hold started
+    if overlap and not laser.holding:
+        print("Laser hold started")
+        laser.holding = True
+        laser.started = True
+        laser.last_tick_time = current_time_ms
+        combo_counter.value += 1
+
+    # Hold continues
+    elif overlap and laser.holding:
+        if laser.last_tick_time is None:
+            laser.last_tick_time = current_time_ms
+        delta = current_time_ms - laser.last_tick_time
+
+        if delta >= constants.LASER_TICK_MS:
+            ticks = delta // constants.LASER_TICK_MS
+            laser.last_tick_time += ticks * constants.LASER_TICK_MS
+            laser.total_hold_time += ticks * constants.LASER_TICK_MS
+            point_counter.value += 50 * ticks
+            gave_combo = False
+            if not gave_combo and laser.total_hold_time >= laser.end_time - laser.start_time:
+                combo_counter.value += 1
+                percent = 100
+                percentage_counter.add_hit(percent)
+                gave_combo = True
+
+    # Hold breaks
+    elif laser.holding and not overlap:
+        # Hold break after starting
+        if not laser.miss and laser.started:
+            combo_counter.value = 0
+            spawn_popup("miss")
+            percent = 25
+            percentage_counter.add_hit(percent)
+        elif not laser.miss and not laser.started:
+            percent = 0
+            percentage_counter.add_hit(percent)
+        laser.miss = True
+        laser.holding = False
+        combo_counter.value = 0
+        spawn_popup("miss")
+    
+    point_counter.update_text_surface()
+    combo_counter.update_text_surface()
+    
 def spawn_popup(type):
     global active_popup
     popup_image = constants.ACCURACY_POPUPS[type]
@@ -330,3 +380,17 @@ def spawn_popup(type):
         "rect": popup_rect,
         "timer": 300  
     }
+
+def chain_lasers(lasers):
+    # Sort by time
+    lasers.sort(key=lambda l: l.start_time)
+
+    for i in range(1, len(lasers)):
+        prev = lasers[i - 1]
+        curr = lasers[i]
+
+        if prev.end_time == curr.start_time:
+            curr.prev_laser = prev
+            prev.next_laser = curr
+            curr.is_chained_from_prev = True
+
