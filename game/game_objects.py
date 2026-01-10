@@ -83,6 +83,7 @@ class LaserObject:
         self.prev_laser = None
         self.next_laser = None
         self.is_chained_from_prev = False
+        self.cursor_positioned = False
 
         self.started = False
         self.miss = False
@@ -114,7 +115,8 @@ class LaserObject:
         start_y = self.y_from_time(self.start_time, current_time)
         end_y = self.y_from_time(self.end_time, current_time)
 
-        if end_y > utils.scale_y(constants.HIT_LINE_Y):  # off the bottom of the screen
+        # Dont draw if past hit line by 100 pixels
+        if end_y - 100 > utils.scale_y(constants.HIT_LINE_Y):
             self.completed = True
 
         dx = end_x - start_x
@@ -126,7 +128,8 @@ class LaserObject:
         if abs(dy) < abs(dx) + SLOPE_EPSILON:
             ratio = abs(dy / dx) if dx != 0 else 0
             ratio = min(ratio, 1.0)
-            offset = (1.0 - ratio) * 50
+            offset = (1.0 - ratio) * self.half_width
+
 
             # If the pixels height difference is less than the offset (Very shallow or flat)
             if (self.end_time - self.start_time) * constants.SCROLL_SPEED < offset:
@@ -211,7 +214,7 @@ class LaserObject:
     
         if not self.points or len(self.points) < 4:
             return (None, None)
-        if current_time < self.start_time or current_time > self.end_time:
+        if current_time < self.start_time or current_time > self.end_time and self.start_time != self.end_time:
             return (None, None)
 
         # We'll check each edge of the polygon and see if it crosses Y
@@ -243,7 +246,7 @@ class LaserObject:
 
     @staticmethod
     def y_from_time(note_time, current_time):
-        return constants.HIT_LINE_Y - (note_time - current_time) * constants.SCROLL_SPEED
+        return utils.scale_y(constants.HIT_LINE_Y) - (note_time - current_time) * constants.SCROLL_SPEED
 
     @staticmethod
     def laser_x_from_norm(norm):

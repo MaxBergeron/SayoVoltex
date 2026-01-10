@@ -3,8 +3,11 @@ from game import constants, utils
 
 class LaserCursor:
     def __init__(self):
-        self.image = pygame.image.load("assets/skin/temp_cursor.png").convert_alpha()
         self.length = utils.scale_x(100)
+        self.height = utils.scale_y(20)
+
+        self.image = pygame.image.load("assets/skin/temp_cursor.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.length, self.height))
 
         self.velocity = 0.0
         self.acceleration = 6    # per input impulse (KEY VALUE)
