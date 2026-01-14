@@ -64,9 +64,16 @@ class HitObject:
 
 class LaserObject:
     def __init__(self, start_time, end_time, start_pos, end_pos, width=50):
+        self.width = utils.scale_x(width)
+        self.half_width = utils.scale_x(width) / 2
         self.start_time = int(start_time)
         self.end_time = int(end_time)
+
         self.duration = self.end_time - self.start_time
+
+        self.artificial_end_time = self.end_time
+        if self.end_time == self.start_time:
+            self.artificial_end_time += ((self.width / constants.SCROLL_SPEED)) + constants.INSTANT_LASER_WAIT_MS
 
         start_pos = int(start_pos)
         end_pos = int(end_pos)
@@ -99,9 +106,6 @@ class LaserObject:
         self.last_tick_time = None
         self.total_hold_time = 0
 
-        self.width = utils.scale_x(width)
-        self.half_width = utils.scale_x(width) / 2
-
         self.color = None
 
         self.points = []
@@ -132,6 +136,9 @@ class LaserObject:
             ratio = abs(dy / dx) if dx != 0 else 0
             ratio = min(ratio, 1.0)
             offset = (1.0 - ratio) * self.half_width
+
+            if self.start_time == self.end_time:
+                offset = self.half_width * 2
 
 
             # If the pixels height difference is less than the offset (Very shallow or flat)

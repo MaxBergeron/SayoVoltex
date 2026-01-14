@@ -215,11 +215,12 @@ def map_loader(screen):
             evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_sound, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
             # Set position of cursor 
             prev = laser.prev_laser
-            wait_time = constants.CURSOR_SNAP_WAIT_MS 
-            if not laser.is_chained_from_prev and prev and prev.end_time + wait_time < current_time_ms and not laser.cursor_positioned:
+            wait_time = constants.CURSOR_SNAP_WAIT_MS
+
+            if not laser.is_chained_from_prev and prev and prev.artificial_end_time + wait_time < current_time_ms and not laser.cursor_positioned:
                 laser.cursor_positioned = True
                 cursor.set_position(laser.start_pos)
-            
+        
         cursor.draw(screen)
 
 
@@ -330,6 +331,7 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
     if laser.miss or laser.completed or current_time_ms < laser.start_time:
         return
     
+    print(current_time_ms)
     percent = 0
 
     min_x, max_x = laser.get_x_at_y(current_time_ms, utils.scale_y(constants.HIT_LINE_Y))
@@ -337,8 +339,16 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
         return
 
     overlap = not (cursor.right_edge < min_x or cursor.left_edge > max_x)
-    if overlap and current_time_ms > laser.start_time + constants.MARGIN_MS and not laser.lateness_checked:
+    # Check for late start
+    if (overlap and current_time_ms > laser.start_time + constants.MARGIN_MS and not laser.lateness_checked) or laser.late_start:
+
+        if not laser.late_start:
+            combo_counter.value = 0
+
         laser.late_start = True
+        # Set conncted lasers to late start as well
+        if laser.is_chained_to_next:
+            laser.next_laser.late_start = True
     elif overlap and current_time_ms <= laser.start_time + constants.MARGIN_MS and not laser.lateness_checked:
         laser.lateness_checked = True
 
@@ -370,16 +380,17 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
                 percentage_counter.add_hit(percent)
                 gave_percentage = True
             
-        prev = laser.prev_laser
-        if (current_time_ms >= laser.end_time - constants.MARGIN_MS and not laser.is_chained_to_next and (prev is None or not prev.miss)):
+        # Continue if laser would reach end
+        if (current_time_ms >= laser.artificial_end_time - constants.MARGIN_MS and not laser.is_chained_to_next):
+            print("REACHED THIS PART")
             laser.completed = True
             laser.holding = False
 
             quarter_lane_width = utils.scale_x(constants.LANE_WIDTH) / 4
-            if laser.start_time == laser.end_time:
-                left_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
-                right_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) + quarter_lane_width
-                overlap = not (cursor.right_edge < left_end_x or cursor.left_edge > right_end_x)
+            #if laser.start_time == laser.end_time:
+                #left_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
+                #right_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) + quarter_lane_width
+                #overlap = not (cursor.right_edge < left_end_x or cursor.left_edge > right_end_x)
 
             if overlap and not laser.late_start:
                 print("Laser completed")
