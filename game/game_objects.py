@@ -83,9 +83,12 @@ class LaserObject:
         self.prev_laser = None
         self.next_laser = None
         self.is_chained_from_prev = False
+        self.is_chained_to_next = False
         self.cursor_positioned = False
+        self.lateness_checked = False
 
         self.started = False
+        self.late_start = False
         self.miss = False
         self.completed = False
 

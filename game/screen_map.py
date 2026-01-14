@@ -47,6 +47,8 @@ def map_loader(screen):
     hit_sound.set_volume(constants.HIT_SOUND_VOLUME)
     tick_sound = pygame.mixer.Sound(constants.TICK_SOUND_PATH)
     tick_sound.set_volume(constants.TICK_SOUND_VOLUME)
+    whistle_sound = pygame.mixer.Sound(constants.WHISTLE_SOUND_PATH)
+    whistle_sound.set_volume(constants.WHISTLE_SOUND_VOLUME)
     hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
 
     laser_objects = hit_object_data["LaserObjects"]
@@ -210,10 +212,10 @@ def map_loader(screen):
         for laser in hit_object_data["LaserObjects"]:
             laser.update_points(current_time_ms)
             laser.draw(screen)
-            evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+            evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_sound, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
             # Set position of cursor 
             prev = laser.prev_laser
-            wait_time = laser.half_width // constants.SCROLL_SPEED
+            wait_time = constants.CURSOR_SNAP_WAIT_MS 
             if not laser.is_chained_from_prev and prev and prev.end_time + wait_time < current_time_ms and not laser.cursor_positioned:
                 laser.cursor_positioned = True
                 cursor.set_position(laser.start_pos)
@@ -324,7 +326,7 @@ def evaluate_note(screen, note, current_time_ms, point_counter, percentage_count
     combo_counter.update_text_surface()
     percentage_counter.add_hit(hit_percent)
 
-def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, point_counter, percentage_counter, combo_counter):
+def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_sound, point_counter, percentage_counter, combo_counter):
     if laser.miss or laser.completed or current_time_ms < laser.start_time:
         return
     
@@ -335,9 +337,13 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, point_cou
         return
 
     overlap = not (cursor.right_edge < min_x or cursor.left_edge > max_x)
+    if overlap and current_time_ms > laser.start_time + constants.MARGIN_MS and not laser.lateness_checked:
+        laser.late_start = True
+    elif overlap and current_time_ms <= laser.start_time + constants.MARGIN_MS and not laser.lateness_checked:
+        laser.lateness_checked = True
+
     # Hold started
     if overlap and not laser.holding:
-        print("Laser hold started")
         laser.holding = True
         laser.started = True
         laser.last_tick_time = current_time_ms
@@ -363,6 +369,36 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, point_cou
                 percent = 100
                 percentage_counter.add_hit(percent)
                 gave_percentage = True
+            
+        prev = laser.prev_laser
+        if (current_time_ms >= laser.end_time - constants.MARGIN_MS and not laser.is_chained_to_next and (prev is None or not prev.miss)):
+            laser.completed = True
+            laser.holding = False
+
+            quarter_lane_width = utils.scale_x(constants.LANE_WIDTH) / 4
+            if laser.start_time == laser.end_time:
+                left_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
+                right_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) + quarter_lane_width
+                overlap = not (cursor.right_edge < left_end_x or cursor.left_edge > right_end_x)
+
+            if overlap and not laser.late_start:
+                print("Laser completed")
+                if not laser.miss:
+                    whistle_sound.play()
+                    percentage_counter.add_hit(100)
+                    spawn_popup("perfect")
+
+            elif laser.late_start:
+                print("Laser late start")
+                whistle_sound.play()
+                percentage_counter.add_hit(25)
+                spawn_popup("ok")
+
+            else:
+                print("Laser missed at end")
+                laser.miss = True
+                combo_counter.value = 0
+                spawn_popup("miss")
 
     # Hold breaks
     elif laser.holding and not overlap:
@@ -404,3 +440,4 @@ def chain_lasers(lasers):
         prev.next_laser = curr
         if prev.end_time == curr.start_time:
             curr.is_chained_from_prev = True
+            prev.is_chained_to_next = True
