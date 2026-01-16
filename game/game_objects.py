@@ -73,7 +73,7 @@ class LaserObject:
 
         self.artificial_end_time = self.end_time
         if self.end_time == self.start_time:
-            self.artificial_end_time += ((self.width / constants.SCROLL_SPEED)) + constants.INSTANT_LASER_WAIT_MS
+            self.artificial_end_time += self.width / constants.SCROLL_SPEED
 
         start_pos = int(start_pos)
         end_pos = int(end_pos)
@@ -93,6 +93,7 @@ class LaserObject:
         self.is_chained_to_next = False
         self.cursor_positioned = False
         self.lateness_checked = False
+        self.start_touched = False
 
         self.started = False
         self.late_start = False

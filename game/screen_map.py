@@ -331,12 +331,72 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
     if laser.miss or laser.completed or current_time_ms < laser.start_time:
         return
     
-    print(current_time_ms)
     percent = 0
 
     min_x, max_x = laser.get_x_at_y(current_time_ms, utils.scale_y(constants.HIT_LINE_Y))
     if min_x is None or max_x is None:
         return
+    
+    # Instant laser logic
+    if laser.start_time == laser.end_time:
+        quarter_lane_width = utils.scale_x(constants.LANE_WIDTH) / 4
+        offset = utils.scale_x(constants.INSTANT_LASER_OFFSET)
+
+        if laser.direction == "right":
+            start_x = game_objects.LaserObject.laser_x_from_norm(laser.start_pos) - quarter_lane_width
+            end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) + quarter_lane_width
+        else: 
+            start_x = game_objects.LaserObject.laser_x_from_norm(laser.start_pos) + quarter_lane_width
+            end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
+        print(f"Laser from {start_x} to {end_x}, cursor at {cursor.position_x} to {cursor.position_x + cursor.length}")
+
+
+        if laser.direction == "right":
+            # Start touched
+            if cursor.position_x < start_x + offset or laser.start_touched:
+                laser.start_touched = True
+                # End touched
+                if cursor.position_x + cursor.length > end_x - offset:
+                    laser.completed = True
+                    whistle_sound.play()
+                    point_counter.value += 300
+                    percentage_counter.add_hit(100)
+                    spawn_popup("perfect")
+                
+                elif current_time_ms > laser.artificial_end_time - constants.MARGIN_MS:
+                    laser.miss = True
+                    combo_counter.value = 0
+                    percentage_counter.add_hit(0)
+                    spawn_popup("miss")
+            else:
+                laser.miss = True
+                combo_counter.value = 0
+                percentage_counter.add_hit(0)
+                spawn_popup("miss")
+        else:
+            # Start touched
+            if cursor.position_x + cursor.length > start_x - offset or laser.start_touched:
+                laser.start_touched = True
+                # End touched
+                if cursor.position_x < end_x + offset:
+                    laser.completed = True
+                    whistle_sound.play()
+                    point_counter.value += 300
+                    percentage_counter.add_hit(100)
+                    spawn_popup("perfect")
+                elif current_time_ms > laser.artificial_end_time - constants.MARGIN_MS:
+                    laser.miss = True
+                    combo_counter.value = 0
+                    percentage_counter.add_hit(0)
+                    spawn_popup("miss")
+            else:
+                laser.miss = True
+                combo_counter.value = 0
+                percentage_counter.add_hit(0)
+                spawn_popup("miss")
+
+
+
 
     overlap = not (cursor.right_edge < min_x or cursor.left_edge > max_x)
     # Check for late start
@@ -374,7 +434,7 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
             point_counter.value += 50 * ticks
             combo_counter.value += 1
             gave_percentage = False
-            if not gave_percentage and laser.total_hold_time >= laser.end_time - laser.start_time:
+            if not gave_percentage and laser.total_hold_time >= laser.end_time - laser.start_time and not laser.start_time == laser.end_time:
                 combo_counter.value += 1
                 percent = 100
                 percentage_counter.add_hit(percent)
@@ -382,31 +442,23 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
             
         # Continue if laser would reach end
         if (current_time_ms >= laser.artificial_end_time - constants.MARGIN_MS and not laser.is_chained_to_next):
-            print("REACHED THIS PART")
             laser.completed = True
             laser.holding = False
 
-            quarter_lane_width = utils.scale_x(constants.LANE_WIDTH) / 4
-            #if laser.start_time == laser.end_time:
-                #left_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
-                #right_end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) + quarter_lane_width
-                #overlap = not (cursor.right_edge < left_end_x or cursor.left_edge > right_end_x)
-
             if overlap and not laser.late_start:
-                print("Laser completed")
                 if not laser.miss:
                     whistle_sound.play()
+                    point_counter.value += 300
                     percentage_counter.add_hit(100)
                     spawn_popup("perfect")
 
             elif laser.late_start:
-                print("Laser late start")
                 whistle_sound.play()
+                point_counter.value += 100
                 percentage_counter.add_hit(25)
                 spawn_popup("ok")
 
             else:
-                print("Laser missed at end")
                 laser.miss = True
                 combo_counter.value = 0
                 spawn_popup("miss")
