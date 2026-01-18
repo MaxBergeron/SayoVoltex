@@ -22,7 +22,10 @@ def main_menu(screen):
     quit_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(550)), 
                              text_input="QUIT", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)),
                              base_color="#d7fcd4", hovering_color="White")
-    
+    editor_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
+                             text_input="EDITOR", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)),
+                             base_color="#d7fcd4", hovering_color="White")
+
     # Load image assets for later
     utils.load_assets()
     
@@ -35,7 +38,7 @@ def main_menu(screen):
         
         screen.blit(menu_text, menu_text_rect)
 
-        for b in [play_button, options_button, quit_button]:
+        for b in [play_button, options_button, quit_button, editor_button]:
             b.change_color(menu_mouse_pos)
             b.update(screen)
 
@@ -51,6 +54,8 @@ def main_menu(screen):
                     return states.OPTIONS
                 elif quit_button.check_for_input(menu_mouse_pos):
                     return states.QUIT
+                elif editor_button.check_for_input(menu_mouse_pos):
+                    return states.EDITOR
         pygame.display.flip()
 
 

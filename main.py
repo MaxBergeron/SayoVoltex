@@ -1,4 +1,4 @@
-from game import screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map
+from game import screen_editor, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map
 from game import states, utils, constants
 import pygame, sys
 
@@ -30,3 +30,6 @@ while True:
     elif state == states.QUIT:
         pygame.quit()
         sys.exit()
+
+    elif state == states.EDITOR:
+        state = screen_editor.editor_menu(screen)
