@@ -59,7 +59,7 @@ class SongTile:
     def find_music_in_folder(self, folder_path):
         for f in os.listdir(folder_path):
             full_path = os.path.join(folder_path, f)
-            if os.path.isfile(full_path) and f.lower().endswith(('.mp3', '.mp4')):
+            if os.path.isfile(full_path) and f.lower().endswith(('.mp3', '.wav', '.ogg')):
                 return full_path
         return None
     

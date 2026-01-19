@@ -1,5 +1,7 @@
 import pygame
 from game import constants
+from pathlib import Path
+
 
 
 key_bindings = {
@@ -91,3 +93,12 @@ def get_action_from_key(key):
         if key == mapped_key:
             return action
     return None
+
+def after_second_to_last_slash(path: str) -> str:
+    parts = Path(path).as_posix().split("/")
+    return "/".join(parts[-2:])
+
+def shorten_text(text: str, max_length: int = 40) -> str:
+    if len(text) <= max_length:
+        return text
+    return text[:max_length - 3] + "..."
