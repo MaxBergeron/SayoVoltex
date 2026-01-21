@@ -59,7 +59,7 @@ def play_menu(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if back_button.check_for_input(play_mouse_pos):
                     return states.MENU
                 for tile in song_tiles:
@@ -79,8 +79,7 @@ def play_menu(screen):
                             constants.SCROLL_SPEED = tile.scroll_speed
                             return states.MAP
                 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+
                     return states.MENU
 
         pygame.display.flip()
