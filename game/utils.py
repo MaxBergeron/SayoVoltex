@@ -1,6 +1,9 @@
 import pygame
 from game import constants
 from pathlib import Path
+import os
+
+from game.game_objects import HitObject, LaserObject
 
 
 
@@ -102,3 +105,60 @@ def shorten_text(text: str, max_length: int = 40) -> str:
     if len(text) <= max_length:
         return text
     return text[:max_length - 3] + "..."
+
+
+def parse_song_file(path):
+    metadata = {}
+    data = {
+        "HitObjects": [],
+        "LaserObjects": []
+    }
+
+    current_section = None
+
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+
+            # Skip empty lines or comments
+            if not line or line.startswith("//"):
+                continue
+
+            # Section headers
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1]
+
+                if section == "Metadata":
+                    current_section = "Metadata"
+                elif section == "HitObjects":
+                    current_section = "HitObjects"
+                elif section == "LaserObjects":
+                    current_section = "LaserObjects"
+                else:
+                    current_section = None
+
+                continue
+
+            # METADATA 
+            if current_section == "Metadata" and ":" in line:
+                key, value = map(str.strip, line.split(":", 1))
+                metadata[key] = value
+                continue
+
+            # OBJECT DATA
+            if current_section in ("HitObjects", "LaserObjects") and "," in line:
+                parts = [p.strip() for p in line.split(",")]
+
+                if current_section == "HitObjects":
+                    data["HitObjects"].append(HitObject(*parts))
+
+                elif current_section == "LaserObjects":
+                    data["LaserObjects"].append(LaserObject(*parts))
+
+    return metadata, data
+
+def find_map_file(song_folder):
+    for file in os.listdir(song_folder):
+        if file.endswith(".txt"):
+            return os.path.join(song_folder, file)
+    return None

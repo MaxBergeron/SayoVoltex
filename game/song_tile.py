@@ -7,8 +7,6 @@ class SongTile:
         self.cover = cover
 
         self.song_data_path = self.find_song_metadata(song_folder_path)
-        self.audio_path = self.find_music_in_folder(song_folder_path)
-        self.image_path = self.find_image_in_folder()
 
         parsed_metadata = self.parse_song_metadata(self.song_data_path)
         self.title = parsed_metadata.get("Title", "NULL")
@@ -16,9 +14,12 @@ class SongTile:
         self.creator = parsed_metadata.get("Creator", "NULL")
         self.version = parsed_metadata.get("Version", "NULL") 
         self.length = int(parsed_metadata.get("Length") or 0)
-        self.scroll_speed = float(parsed_metadata.get("Scroll_Speed") or 0)
+        self.scroll_speed = float(parsed_metadata.get("Scroll Speed") or 0)
         self.BPM = int(parsed_metadata.get("BPM") or 0)
-        self.audio_lead_in = int(parsed_metadata.get("Audio_Lead_In") or 0)
+        self.audio_lead_in = int(parsed_metadata.get("Audio Lead In") or 0)
+        default_image_path = "assets/images/default_texture.png"
+        self.image_path = parsed_metadata.get("Image Path", default_image_path)
+        self.audio_path = parsed_metadata.get("Audio Path", "NULL")
 
         self.image = pygame.image.load(self.image_path).convert_alpha()
         width, height = self.image.get_size()
@@ -48,20 +49,6 @@ class SongTile:
     def position(self, value):
         self.pos_x, self.pos_y = value
         self.rect.topleft = (self.pos_x, self.pos_y)
-        
-    def find_image_in_folder(self):
-        folder = os.path.dirname(self.song_data_path)
-        for f in os.listdir(folder):
-            if f.lower().endswith(('.png', '.jpg', '.jpeg')):
-                return os.path.join(folder, f)
-        return None
-    
-    def find_music_in_folder(self, folder_path):
-        for f in os.listdir(folder_path):
-            full_path = os.path.join(folder_path, f)
-            if os.path.isfile(full_path) and f.lower().endswith(('.mp3', '.wav', '.ogg')):
-                return full_path
-        return None
     
     def find_song_metadata(self, folder_path):
         for f in os.listdir(folder_path):
@@ -69,6 +56,7 @@ class SongTile:
             if os.path.isfile(full_path) and f.lower().endswith('.txt'):
                 return full_path
         return None
+
 
     def parse_song_metadata(self, song_data_path):
         metadata = {}

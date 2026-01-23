@@ -78,8 +78,10 @@ def play_menu(screen):
                             constants.SELECTED_TILE = tile
                             constants.SCROLL_SPEED = tile.scroll_speed
                             return states.MAP
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return states.MENU
                 
 
-                    return states.MENU
 
         pygame.display.flip()

@@ -23,6 +23,7 @@ def editor_menu(screen):
     user_audio_file_path = "test"
     text_user_audio_file_rect = None
     user_image_file_path = "test"
+    metadata, objectdata = None, None
 
     audio_file_path_got = False
     image_file_path_got = False
@@ -157,7 +158,13 @@ def editor_menu(screen):
                             audio_file_path = copy_file_to_folder(user_audio_file_path, folder_path)
                             image_file_path = copy_file_to_folder(user_image_file_path, folder_path)
                             if not song_path.exists():
-                                create_song_file(song_path, title_input.text, artist_input.text, version_input.text, scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, creator_input.text, audio_file_path, image_file_path)
+                                create_song_file(song_path, title_input.text, artist_input.text, version_input.text, 
+                                                 scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
+                                                 creator_input.text, audio_file_path, image_file_path)
+                                metadata = assign_metadata(title_input.text, artist_input.text, version_input.text, 
+                                                 scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
+                                                 creator_input.text, audio_file_path, image_file_path)
+                                print(metadata)
                             else:
                                 display_error = True
                                 error_message = "Song file already exists."
@@ -187,8 +194,12 @@ def editor_menu(screen):
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if upload_song_folder_button.check_for_input(menu_mouse_pos):
                         folder_path, success = upload_song_folder()
+                        map_file_path = utils.find_map_file(folder_path)
                         if success:
-                            song_parameters_set = True  # For demonstration purposes   
+                            song_parameters_set = True  # For demonstration purposes
+                            metadata, objectdata = utils.parse_song_file(map_file_path)
+                            print(metadata)
+
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         editor_method_chosen = None 
@@ -411,6 +422,9 @@ def display_error_message(screen, message):
         y += surf.get_height() + line_spacing
 
 def wrap_text(text, font, max_width):
+
+
+    
     words = text.split(" ")
     lines = []
     current_line = ""
@@ -427,3 +441,11 @@ def wrap_text(text, font, max_width):
         lines.append(current_line)
 
     return lines
+
+def assign_metadata(title, artist, version, scroll_speed, bpm, audio_lead_in, creator, audio_file_path, image_file_path):
+    metadata = {
+        "Title": title, "Artist": artist, "Version": version,
+        "Scroll Speed": scroll_speed, "BPM": bpm, "Audio Lead In": audio_lead_in,
+        "Creator": creator, "Audio Path": audio_file_path, "Image Path": image_file_path
+    }
+    return metadata
