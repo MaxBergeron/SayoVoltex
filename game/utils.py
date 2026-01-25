@@ -143,6 +143,8 @@ def parse_song_file(path):
             if current_section == "Metadata" and ":" in line:
                 key, value = map(str.strip, line.split(":", 1))
                 metadata[key] = value
+                if key == "Scroll Speed":
+                    constants.SCROLL_SPEED = float(value)
                 continue
 
             # OBJECT DATA

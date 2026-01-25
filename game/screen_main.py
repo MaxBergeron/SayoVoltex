@@ -55,7 +55,7 @@ def main_menu(screen):
                 elif quit_button.check_for_input(menu_mouse_pos):
                     return states.QUIT
                 elif editor_button.check_for_input(menu_mouse_pos):
-                    return states.EDITOR
+                    return states.EDITOR_INITIALIZE
         pygame.display.flip()
 
 
