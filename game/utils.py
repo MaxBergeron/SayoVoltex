@@ -160,7 +160,27 @@ def parse_song_file(path):
     return metadata, data
 
 def find_map_file(song_folder):
-    for file in os.listdir(song_folder):
-        if file.endswith(".txt"):
-            return os.path.join(song_folder, file)
-    return None
+    if not song_folder == "":
+        for file in os.listdir(song_folder):
+            if file.endswith(".txt"):
+                return os.path.join(song_folder, file)
+    else:
+        return None 
+    
+def wrap_text(text, font, max_width):
+    words = text.split(" ")
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = current_line + (" " if current_line else "") + word
+        if font.size(test_line)[0] <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        lines.append(current_line)
+
+    return lines

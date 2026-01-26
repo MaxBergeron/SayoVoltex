@@ -94,6 +94,10 @@ def editor_initialize_menu(screen):
     back_button = button.Button(image=None, pos=(utils.scale_x(325), utils.scale_y(540)), 
                              text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
+    
+    test_button = button.Button(image=None, pos=(utils.scale_x(center_x), utils.scale_y(540)), text_input="TEST",
+                                  font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)),
+                                  base_color="#d7fcd4", hovering_color="White")
 
     clock = pygame.time.Clock()
 
@@ -111,7 +115,7 @@ def editor_initialize_menu(screen):
 
         # Choose load method
         if editor_method_chosen is None:
-            choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_song_button, back_button)
+            choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_song_button, back_button, test_button)
             screen.blit(text_or, text_or_rect)
             for event in event_list:
                 if event.type == pygame.QUIT:
@@ -125,9 +129,12 @@ def editor_initialize_menu(screen):
                         editor_method_chosen = "new"
                     elif back_button.check_for_input(menu_mouse_pos):
                         return states.MENU
+                    elif test_button.check_for_input(menu_mouse_pos):
+                        metadata = assign_metadata("Title", "artist", "version", 0.35, 120, 0, "creator", "audio_file_path", "image_file_path")
+                        return states.EDITOR, metadata, objectdata
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        return states.MENU
+                        return states.MENU, metadata, objectdata
 
         # New song 
         if not song_parameters_set and editor_method_chosen == "new":
@@ -254,6 +261,7 @@ def initial_settings_popup(screen, menu_mouse_pos, event_list, popup_group, subm
     back_button.change_color(menu_mouse_pos)
     back_button.update(screen)
 
+
 def choose_existing_song_popup(screen, menu_mouse_pos, upload_song_folder_button, back_button):
     popup_width, popup_height = utils.scale_x(800), utils.scale_y(450)
     popup_x = (screen.get_width() - popup_width) // 2
@@ -268,7 +276,7 @@ def choose_existing_song_popup(screen, menu_mouse_pos, upload_song_folder_button
     back_button.change_color(menu_mouse_pos)
     back_button.update(screen)
 
-def choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_song_button, back_button):
+def choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_song_button, back_button, test_button):
     popup_width, popup_height = utils.scale_x(800), utils.scale_y(450)
     popup_x = (screen.get_width() - popup_width) // 2
     popup_y = (screen.get_height() - popup_height) // 2
@@ -283,6 +291,8 @@ def choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_s
     new_song_button.update(screen)
     back_button.change_color(menu_mouse_pos)
     back_button.update(screen)
+    test_button.change_color(menu_mouse_pos)
+    test_button.update(screen)
 
 def create_song_file(song_path, title, artist, version, scroll_speed, bpm, audio_lead_in, creator, audio_file_path, image_file_path):
     with open(song_path, "w") as f:
@@ -418,7 +428,7 @@ def display_error_message(screen, message):
     # Render title
     title_surf = title_font.render("ERROR", True, (255, 255, 255))
     # Wrap message text
-    lines = wrap_text(message, body_font, max_text_width)
+    lines = utils.wrap_text(message, body_font, max_text_width)
     text_surfs = [body_font.render(line, True, (255, 255, 255)) for line in lines]
     # Calculate box size
     text_width = max(surf.get_width() for surf in text_surfs)
@@ -441,24 +451,6 @@ def display_error_message(screen, message):
         rect = surf.get_rect(midtop=(box_rect.centerx, y))
         screen.blit(surf, rect)
         y += surf.get_height() + line_spacing
-
-def wrap_text(text, font, max_width):
-    words = text.split(" ")
-    lines = []
-    current_line = ""
-
-    for word in words:
-        test_line = current_line + (" " if current_line else "") + word
-        if font.size(test_line)[0] <= max_width:
-            current_line = test_line
-        else:
-            lines.append(current_line)
-            current_line = word
-
-    if current_line:
-        lines.append(current_line)
-
-    return lines
 
 def assign_metadata(title, artist, version, scroll_speed, bpm, audio_lead_in, creator, audio_file_path, image_file_path):
     metadata = {

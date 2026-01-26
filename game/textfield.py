@@ -22,17 +22,35 @@ class TextInputBox(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midleft=self.pos)
 
     def update(self, event_list):
+        dt = pygame.time.get_ticks()  # get current time in milliseconds
+
         for event in event_list:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.rect.collidepoint(event.pos):
                     self.active = True
                 else:
                     self.active = False
+
             if event.type == pygame.KEYDOWN and self.active:
                 if event.key == pygame.K_RETURN:
                     self.active = False
                 elif event.key == pygame.K_BACKSPACE:
-                    self.text = self.text[:-1]
+                    self.backspace_held = True
+                    self.backspace_timer = 0  # reset timer
                 else:
                     self.text += event.unicode
                 self.render_text()
+
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKSPACE:
+                    self.backspace_held = False
+
+        # Handle hold-backspace
+        if getattr(self, "backspace_held", False):
+            if not hasattr(self, "last_backspace_time"):
+                self.last_backspace_time = pygame.time.get_ticks()
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_backspace_time >= 50:  # repeat every 100ms
+                self.text = self.text[:-1]
+                self.render_text()
+                self.last_backspace_time = current_time
