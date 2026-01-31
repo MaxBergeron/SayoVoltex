@@ -15,7 +15,7 @@ class HitObject:
 
     def draw(self, screen, current_time_ms):
         scroll_speed = constants.SCROLL_SPEED
-        top_y = utils.scale_x(constants.HIT_LINE_Y) - (self.time - current_time_ms) * scroll_speed
+        top_y = self.get_top_y(current_time_ms)
 
         # TAP note
         if self.duration <= 0:
@@ -45,6 +45,14 @@ class HitObject:
         
         # Draw tail  
         screen.blit(tail_image, (self.position_x, top_y - note_length))
+
+    def get_top_y(self, current_time_ms):
+        return (utils.scale_y(constants.HIT_LINE_Y) - (self.time - current_time_ms) * constants.SCROLL_SPEED)
+    
+    def get_bottom_y(self, current_time_ms):
+        top_y = self.get_top_y(current_time_ms)
+        note_length = self.duration * constants.SCROLL_SPEED
+        return top_y - note_length
 
     def assign_hold_note_images(self):
         if self.hold_started or self.holding:

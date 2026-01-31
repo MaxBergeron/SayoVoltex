@@ -38,7 +38,7 @@ def editor_initialize_menu(screen):
     
     x = utils.scale_x(250)
     padding = utils.scale_x(12)
-    center_x = utils.scale_x(constants.BASE_W // 2)
+    center_x = constants.BASE_W // 2
 
     text_or = font_small.render("OR", True, "#b68f40")
     text_or_rect = text_or.get_rect(center=(utils.scale_x(640), utils.scale_y(340)))
@@ -130,7 +130,7 @@ def editor_initialize_menu(screen):
                     elif back_button.check_for_input(menu_mouse_pos):
                         return states.MENU
                     elif test_button.check_for_input(menu_mouse_pos):
-                        metadata = assign_metadata("Title", "artist", "version", 0.35, 120, 0, "creator", "audio_file_path", "image_file_path")
+                        metadata = assign_metadata("Title", "artist", "version", "0.35", "120", "0", "creator", "audio_file_path", "image_file_path")
                         return states.EDITOR, metadata, objectdata
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:

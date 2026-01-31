@@ -13,6 +13,10 @@ def map_loader(screen):
     dark_map_background = map_background.copy()
     dark_map_background.fill((dark_factor * 255, dark_factor * 255, dark_factor * 255), special_flags=pygame.BLEND_MULT)
 
+    map_lines_outline = pygame.image.load("assets/images/map_lines_outline.png")
+    map_lines_outline = pygame.transform.scale(map_lines_outline, (utils.scale_x(400), utils.scale_y(720)))
+
+
     continue_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(240)), 
                              text_input="Continue", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
@@ -70,8 +74,7 @@ def map_loader(screen):
             map_mouse_pos = pygame.mouse.get_pos()
 
             screen.blit(dark_map_background, (0, 0))
-            draw_lanes(screen, x_center)
-
+            
             for note in hit_object_data["HitObjects"]:
                 if note.hit or note.hold_complete or note.miss:
                     continue
@@ -80,9 +83,10 @@ def map_loader(screen):
             for laser in hit_object_data["LaserObjects"]:
                 laser.draw(screen)
 
+            screen.blit(map_lines_outline, (utils.scale_x(x_center - 200), 0))
 
             for counter in counters.values():
-                counter.update(screen)
+                counter.update(screen)    
 
             cursor.draw(screen)
 
@@ -109,19 +113,18 @@ def map_loader(screen):
                         player.unpause()
                         paused = False
                     elif retry_button.check_for_input(map_mouse_pos):
+                        active_popup = None
                         return states.MAP
                     elif exit_button.check_for_input(map_mouse_pos):
+                        active_popup = None
                         return states.PLAY
             continue  # skip the rest of the loop while paused
 
         # Update time
         current_time_ms = player.get_position() * 1000
 
-        # Draw background,lanes, and counwers
+        # Draw background
         screen.blit(dark_map_background, (0, 0))
-        draw_lanes(screen, x_center)
-        for counter in counters.values():
-            counter.update(screen)
 
         # Event handling
         for event in pygame.event.get():
@@ -205,7 +208,7 @@ def map_loader(screen):
 
         # Draw notes
         for note in hit_object_data["HitObjects"]:
-            if note.hit or note.hold_complete or note.miss:
+            if note.hit or note.hold_complete or note.get_bottom_y(current_time_ms) > utils.scale_y(constants.BASE_H):
                 continue
             note.draw(screen, current_time_ms)
         
@@ -221,6 +224,12 @@ def map_loader(screen):
                 laser.cursor_positioned = True
                 cursor.set_position(laser.start_pos)
         
+        # Draw lanes and counters
+        screen.blit(map_lines_outline, (utils.scale_x(x_center - 200), 0))
+        for counter in counters.values():
+            counter.update(screen)
+            
+
         cursor.draw(screen)
 
 
