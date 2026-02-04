@@ -58,9 +58,6 @@ def map_loader(screen):
     laser_objects = hit_object_data["LaserObjects"]
     chain_lasers(laser_objects)
 
-    for note in hit_object_data["HitObjects"]:
-        note.position_x = utils.scale_x(x_center - 150) + (note.key - 1) * utils.scale_x(100)
-
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
     player.play()
     pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)

@@ -48,14 +48,17 @@ def editor_menu(screen, metadata=None, object_data=None):
 
     
 
-   
+    editor_time_ms = 0
+
     while True:
         menu_mouse_pos = pygame.mouse.get_pos()
         event_list = pygame.event.get()
 
         screen.blit(main_menu_background, (0, 0))
-        editor_grid.draw(screen)    
+        editor_grid.draw_background(screen)
+        editor_grid.draw_notes(screen, editor_time_ms)
         screen.blit(map_lines_minimal, utils.scale_pos((x_center - 200), 0))
+
 
 
 
@@ -71,7 +74,7 @@ def editor_menu(screen, metadata=None, object_data=None):
                     editor_grid.object_place_type = "note"
                 elif select_laser_button.check_for_input(menu_mouse_pos):
                     editor_grid.object_place_type = "laser"
-                elif editor_grid.check_for_input(menu_mouse_pos):
+                elif editor_grid.check_for_input(menu_mouse_pos, editor_time_ms):
                     print(menu_mouse_pos)
 
 

@@ -16,6 +16,7 @@ class HitObject:
     def draw(self, screen, current_time_ms):
         scroll_speed = constants.SCROLL_SPEED
         top_y = self.get_top_y(current_time_ms)
+        self.position_x = utils.scale_x(constants.BASE_W // 2 - 150) + (self.key - 1) * utils.scale_x(100)
 
         # TAP note
         if self.duration <= 0:
@@ -67,6 +68,15 @@ class HitObject:
                 constants.HOLD_NOTE_BODY_IMAGE,
                 constants.HOLD_NOTE_TAIL_IMAGE
             )
+        
+    @staticmethod
+    def click_y_to_time(mouse_y, current_time_ms):
+        hit_line_y = utils.scale_y(constants.HIT_LINE_Y)
+        time_offset = (hit_line_y - mouse_y) / constants.SCROLL_SPEED
+        return int(current_time_ms + time_offset)
+    
+    def __str__(self):
+        return f"HitObject(key={self.key}, time={self.time}ms, duration={self.duration}ms)"
 
 
 

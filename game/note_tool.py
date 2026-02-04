@@ -5,11 +5,6 @@ from game.game_objects import HitObject, LaserObject
 
 
 class NoteTool:
-    """Basic editor tool for placing notes.
-
-    This is intentionally minimal so it can be wired into the editor UI later.
-    """
-
     def __init__(self):
         self.lane_count = 3
         self.pos_x = utils.scale_x(440)
@@ -29,23 +24,31 @@ class NoteTool:
         self.preview_time_ms = 0
 
 
-
-
-    def draw(self, screen):
+    def draw_background(self, screen):
         screen.blit(self.image, self.rect)
 
-    def check_for_input(self, position):
+    def draw_notes(self, screen, editor_time_ms):
+        for note in self.notes:
+            note.draw(screen, editor_time_ms)
+
+    def check_for_input(self, position, editor_time_ms):
         if self.in_bounds(position):
             if self.object_place_type == "note":
-                self.place_note(position)
+                self.place_note(position, editor_time_ms)
             elif self.object_place_type == "laser":
-                self.place_laser(position)
+                self.place_laser(position, editor_time_ms)
         return self.rect.collidepoint(position)
     
-    def place_note(self, position):
-        key = int((position[0] - utils.scale_x(490)) / 100) + 1
-        self.notes.append(HitObject(key, 0, position[1]))
-        print(key)
+    def place_note(self, position, editor_time_ms):
+        mouse_x, mouse_y = position
+        key = int((mouse_x - utils.scale_x(490)) / 100) + 1
+        
+        note_time = HitObject.click_y_to_time(mouse_y, editor_time_ms)
+
+        new_note = HitObject(key, duration=0, time=note_time)
+        print(new_note)
+
+        self.notes.append(new_note)
 
     def place_laser(self, position):
         start_pos = int((position[0] - utils.scale_x(440)) / 50) + 1
@@ -68,5 +71,6 @@ class NoteTool:
             if (position[0] > utils.scale_x(440) and position[0] < utils.scale_x(840)): 
                 return True 
         return False
+    
 
 
