@@ -2,7 +2,7 @@ import pygame, sys
 from game import utils, constants
 
 class Dropdown:
-    def __init__(self, x, y, w, h, title, options, font_dropdown, font_popup):
+    def __init__(self, x, y, w, h, title, options, font_dropdown, font_popup, editable):
         # Normalize rectangle using utils.scale
         self.rect = pygame.Rect(utils.scale_x(x), utils.scale_y(y), utils.scale_x(w), utils.scale_y(h))
         self.title = title
@@ -15,6 +15,7 @@ class Dropdown:
         self.user_input = ""
         self.key_being_edited = None
         self.old_value = ""
+        self.editable = editable
 
         # Colors
         self.base_color = (50, 50, 50)
@@ -23,21 +24,18 @@ class Dropdown:
         self.option_hover_color = (100, 100, 100)
         self.text_color = (255, 255, 255)
 
-    def handle_event(self, event, metadata):
-        if self.input_active:
-            # Handle typing for popup
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    if self.user_input.strip() != "":
-                        metadata[self.key_being_edited] = self.user_input.strip()
-                    self.input_active = False
-                elif event.key == pygame.K_ESCAPE:
-                    self.input_active = False
-                elif event.key == pygame.K_BACKSPACE:
-                    self.user_input = self.user_input[:-1]
-                else:
-                    self.user_input += event.unicode
-            return  # Skip other events while typing
+    def handle_event(self, event, data):
+        if self.input_active and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                if self.user_input.strip() != "":
+                    data[self.key_being_edited] = self.user_input.strip()
+                self.input_active = False
+            elif event.key == pygame.K_ESCAPE:
+                self.input_active = False
+            elif event.key == pygame.K_BACKSPACE:
+                self.user_input = self.user_input[:-1]
+            else:
+                self.user_input += event.unicode
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):
@@ -52,11 +50,15 @@ class Dropdown:
                     )
                     if option_rect.collidepoint(event.pos):
                         self.selected = option
-                        self.key_being_edited = option
-                        self.old_value = metadata.get(option, "")
-                        self.user_input = self.old_value
-                        self.input_active = True
                         self.open = False
+                        if self.editable:
+                            self.key_being_edited = option
+                            self.old_value = data.get(option, "")
+                            self.user_input = self.old_value
+                            self.input_active = True
+                        else:
+                             data["value"] = option
+                             self.title = option
 
     def draw(self, screen):
         mouse_pos = pygame.mouse.get_pos()

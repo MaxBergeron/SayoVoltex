@@ -71,9 +71,9 @@ class HitObject:
 
 
 class LaserObject:
-    def __init__(self, start_time, end_time, start_pos, end_pos, width=50):
-        self.width = utils.scale_x(width)
-        self.half_width = utils.scale_x(width) / 2
+    def __init__(self, start_time, end_time, start_pos, end_pos):
+        self.width = utils.scale_x(50)
+        self.half_width = utils.scale_x(50) / 2
         self.start_time = int(start_time)
         self.end_time = int(end_time)
 

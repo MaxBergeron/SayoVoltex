@@ -1,12 +1,13 @@
 import os, sys
 import pygame
-from game import button, states, utils, constants, dropdown
+from game import button, states, utils, constants, dropdown, note_tool
 import tkinter as tk
 
 
 
 def editor_menu(screen, metadata=None, object_data=None):
     pygame.display.set_caption("Editor")
+    pygame.key.set_repeat(300, 50)
 
     main_menu_background = pygame.image.load("assets/backgrounds/editor_initialize_background.jpg").convert()
     main_menu_background = pygame.transform.scale(main_menu_background, screen.get_size()).convert()
@@ -18,13 +19,23 @@ def editor_menu(screen, metadata=None, object_data=None):
     font_xtiny = utils.get_font(utils.scale_y(constants.SIZE_XTINY))
     font_xxtiny = utils.get_font(utils.scale_y(constants.SIZE_XXTINY))
 
+    constants.SCROLL_SPEED = float(metadata["Scroll Speed"])
+
     map_lines_minimal = pygame.image.load("assets/images/map_lines_minimal.png")
     map_lines_minimal = pygame.transform.scale(map_lines_minimal, (utils.scale_x(400), utils.scale_y(720)))
+
+    editor_grid = note_tool.NoteTool()
 
     change_song_setup_dropdown = dropdown.Dropdown(
     0, 0, 200, 40, "Change Song Setup Settings",
     ["Title", "Artist", "Creator", "Version", "Scroll Speed", "BPM", "Audio Lead In"],
-    font_xxtiny, font_tiny)
+    font_xxtiny, font_tiny, True)
+
+    beat_divisor_value = {"value": "1/4"}
+    choose_beat_division = dropdown.Dropdown(
+    200, 0, 200, 40, "Choose Beat Division",
+    ["1/4", "1/8", "1/12", "1/16", "1/24", "1/32"],
+    font_xxtiny, font_tiny, False)
 
     note_button_image = pygame.image.load("assets/images/select_note_button.png")
     note_button_image = pygame.transform.scale(note_button_image, utils.scale_pos(150, 150))
@@ -43,7 +54,9 @@ def editor_menu(screen, metadata=None, object_data=None):
         event_list = pygame.event.get()
 
         screen.blit(main_menu_background, (0, 0))
+        editor_grid.draw(screen)    
         screen.blit(map_lines_minimal, utils.scale_pos((x_center - 200), 0))
+
 
 
         for event in event_list:
@@ -55,15 +68,21 @@ def editor_menu(screen, metadata=None, object_data=None):
                     return states.EDITOR_INITIALIZE
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if select_note_button.check_for_input(menu_mouse_pos):
-                    print("Note button pressed")
-                if select_laser_button.check_for_input(menu_mouse_pos):
-                    print("Laser button pressed")
+                    editor_grid.object_place_type = "note"
+                elif select_laser_button.check_for_input(menu_mouse_pos):
+                    editor_grid.object_place_type = "laser"
+                elif editor_grid.check_for_input(menu_mouse_pos):
+                    print(menu_mouse_pos)
+
+
 
             change_song_setup_dropdown.handle_event(event, metadata)
+            choose_beat_division.handle_event(event, beat_divisor_value)
 
         select_laser_button.update(screen)
         select_note_button.update(screen)
         change_song_setup_dropdown.draw(screen)
+        choose_beat_division.draw(screen)
         pygame.display.flip()
 
 
