@@ -70,10 +70,13 @@ class HitObject:
             )
         
     @staticmethod
-    def click_y_to_time(mouse_y, current_time_ms):
+    def click_y_to_time(mouse_y, current_time_ms, ms_per_subdivision, breakpoint_time):
         hit_line_y = utils.scale_y(constants.HIT_LINE_Y)
         time_offset = (hit_line_y - mouse_y) / constants.SCROLL_SPEED
-        return int(current_time_ms + time_offset)
+        time_clicked = current_time_ms + time_offset
+        time_difference = time_clicked - breakpoint_time
+        subdivision_index = round(time_difference / ms_per_subdivision)
+        return (subdivision_index * ms_per_subdivision) + breakpoint_time
     
     def __str__(self):
         return f"HitObject(key={self.key}, time={self.time}ms, duration={self.duration}ms)"

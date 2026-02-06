@@ -184,3 +184,14 @@ def wrap_text(text, font, max_width):
         lines.append(current_line)
 
     return lines
+
+def seconds_to_minutes_seconds(total_seconds):
+    minutes = int(total_seconds) // 60
+    seconds = int(total_seconds) % 60
+    return f"{minutes}:{seconds:02}"
+
+def ms_to_min_sec_ms(total_ms):
+    minutes = int(total_ms) // 60000
+    seconds = (int(total_ms) % 60000) // 1000
+    ms = int(total_ms) % 1000
+    return f"{minutes}:{seconds:02}:{ms:02}"

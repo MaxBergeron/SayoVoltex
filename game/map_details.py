@@ -24,7 +24,7 @@ class MapDetails:
             f"Artist: {self.artist}",
             f"Creator: {self.creator}",
             f"Version: {self.version}",
-            f"Length: {self.seconds_to_minutes_seconds(self.length)}",
+            f"Length: {utils.seconds_to_minutes_seconds(self.length)}",
             f"Scroll Speed: {self.scroll_speed}",
             f"BPM: {self.BPM}",
         ]
@@ -43,9 +43,3 @@ class MapDetails:
         screen.blit(scroll_speed_text, (utils.scale_x(150), utils.scale_y(170)))
         bpm_text = font_xtiny.render(details[6], True, "White")
         screen.blit(bpm_text, (utils.scale_x(5), utils.scale_y(210)))
-
-    def seconds_to_minutes_seconds(self, total_seconds):
-        minutes = int(total_seconds) // 60
-        seconds = int(total_seconds) % 60
-        return f"{minutes}:{seconds:02}"
-                 

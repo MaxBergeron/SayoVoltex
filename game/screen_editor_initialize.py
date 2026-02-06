@@ -130,7 +130,7 @@ def editor_initialize_menu(screen):
                     elif back_button.check_for_input(menu_mouse_pos):
                         return states.MENU
                     elif test_button.check_for_input(menu_mouse_pos):
-                        metadata = assign_metadata("Title", "artist", "version", "0.35", "120", "0", "creator", "audio_file_path", "image_file_path")
+                        metadata = assign_metadata("Title", "artist", "version", "0.35", "120", "0", "creator", "song_folder\Susume-Easy-Corgo\Gary Come Home Punk Cover.wav", "image_file_path")
                         return states.EDITOR, metadata, objectdata
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -167,8 +167,8 @@ def editor_initialize_menu(screen):
                             folder_path = f"song_folder/{title_input.text}-{version_input.text}-{creator_input.text}"
                             Path(folder_path).mkdir(exist_ok=True)
                             song_path = Path(folder_path) / f"{title_input.text}-{version_input.text}-{creator_input.text}.txt"
-                            audio_file_path = copy_file_to_folder(user_audio_file_path, folder_path)
-                            image_file_path = copy_file_to_folder(user_image_file_path, folder_path)
+                            audio_file_path = normalize_path(copy_file_to_folder(user_audio_file_path, folder_path))
+                            image_file_path = normalize_path(copy_file_to_folder(user_image_file_path, folder_path))
                             if not song_path.exists():
                                 create_song_file(song_path, title_input.text, artist_input.text, version_input.text, 
                                                  scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
@@ -331,9 +331,9 @@ def get_audio_file_path():
         initialdir=downloads_folder,
         filetypes=(("audio files", "*.mp3 *.wav *.ogg"), ("All files", "*.*"))
     )
+    root.destroy()
 
     if file_path:
-        
         return file_path, True
     else:
         return file_path, False
@@ -406,6 +406,11 @@ def upload_song_folder():
     else:
         return folder_path, False
     
+def normalize_path(path):
+    path = os.path.normpath(path)
+    return path.replace("\\", "/")
+    
+@staticmethod
 def get_audio_length(file_path):
     audio = File(file_path)
     if audio is None:

@@ -1,6 +1,6 @@
 import os, sys
 import pygame
-from game import button, states, utils, constants, dropdown, note_tool
+from game import button, states, utils, constants, dropdown, note_tool, timeline, screen_editor_initialize
 import tkinter as tk
 
 
@@ -20,11 +20,14 @@ def editor_menu(screen, metadata=None, object_data=None):
     font_xxtiny = utils.get_font(utils.scale_y(constants.SIZE_XXTINY))
 
     constants.SCROLL_SPEED = float(metadata["Scroll Speed"])
+    audio_length_ms = screen_editor_initialize.get_audio_length(metadata["Audio Path"]) * 1000
+    time_line = timeline.Timeline(audio_length_ms)
 
     map_lines_minimal = pygame.image.load("assets/images/map_lines_minimal.png")
     map_lines_minimal = pygame.transform.scale(map_lines_minimal, (utils.scale_x(400), utils.scale_y(720)))
 
     editor_grid = note_tool.NoteTool()
+    editor_grid.add_breakpoint(int(metadata["Audio Lead In"]))
 
     change_song_setup_dropdown = dropdown.Dropdown(
     0, 0, 200, 40, "Change Song Setup Settings",
@@ -74,14 +77,18 @@ def editor_menu(screen, metadata=None, object_data=None):
                     editor_grid.object_place_type = "note"
                 elif select_laser_button.check_for_input(menu_mouse_pos):
                     editor_grid.object_place_type = "laser"
-                elif editor_grid.check_for_input(menu_mouse_pos, editor_time_ms):
-                    print(menu_mouse_pos)
+                elif (clicked_info := time_line.check_for_input(menu_mouse_pos))[0]:
+                    time_line.update(clicked_info[1])
+                elif editor_grid.check_for_input(menu_mouse_pos, editor_time_ms, metadata["BPM"], beat_divisor_value["value"]):
+                    pass
 
 
 
             change_song_setup_dropdown.handle_event(event, metadata)
             choose_beat_division.handle_event(event, beat_divisor_value)
 
+        time_line.draw(screen)
+        editor_grid.draw_note_hover(screen, menu_mouse_pos, editor_time_ms, metadata["BPM"], beat_divisor_value["value"])
         select_laser_button.update(screen)
         select_note_button.update(screen)
         change_song_setup_dropdown.draw(screen)
