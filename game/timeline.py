@@ -24,9 +24,9 @@ class Timeline:
 
     def update(self, time_line_x_clicked):
         self.tlc_x = time_line_x_clicked
-        print(self.total_time)
-        self.time = self.total_time * (time_line_x_clicked / constants.BASE_W)
+        self.time = self.total_time * (time_line_x_clicked / utils.scale_x(constants.BASE_W))
         self.time_text = f"{utils.ms_to_min_sec_ms(self.time)}"
+        return self.time
 
     def check_for_input(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos

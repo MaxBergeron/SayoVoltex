@@ -29,16 +29,26 @@ def editor_menu(screen, metadata=None, object_data=None):
     editor_grid = note_tool.NoteTool()
     editor_grid.add_breakpoint(int(metadata["Audio Lead In"]))
 
+    temp_note_storage = []
+
     change_song_setup_dropdown = dropdown.Dropdown(
     0, 0, 200, 40, "Change Song Setup Settings",
     ["Title", "Artist", "Creator", "Version", "Scroll Speed", "BPM", "Audio Lead In"],
     font_xxtiny, font_tiny, True)
 
     beat_divisor_value = {"value": "1/4"}
-    choose_beat_division = dropdown.Dropdown(
+    choose_beat_division_dropdown = dropdown.Dropdown(
     200, 0, 200, 40, "Choose Beat Division",
     ["1/4", "1/8", "1/12", "1/16", "1/24", "1/32"],
     font_xxtiny, font_tiny, False)
+
+
+    add_breakpoint_button = button.Button(image=None, pos=(utils.scale_x(1060), utils.scale_y(18)), text_input="+",
+                                  font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), base_color="#a1a1a1", hovering_color="White")
+    breakpoints_dropdown = dropdown.Dropdown(
+    1080, 0, 200, 40, "Breakpoints",
+    editor_grid.get_breakpoints(),
+    font_xxtiny, font_tiny, True)
 
     note_button_image = pygame.image.load("assets/images/select_note_button.png")
     note_button_image = pygame.transform.scale(note_button_image, utils.scale_pos(150, 150))
@@ -70,29 +80,61 @@ def editor_menu(screen, metadata=None, object_data=None):
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE and not change_song_setup_dropdown.input_active and not breakpoints_dropdown.input_active:
                     return states.EDITOR_INITIALIZE
+                # Redo
+                if event.key == pygame.K_z and (event.mod & pygame.KMOD_CTRL) and (event.mod & pygame.KMOD_SHIFT):
+                    if temp_note_storage:
+                        editor_grid.notes.append(temp_note_storage.pop())
+                # Undo
+                elif event.key == pygame.K_z and (event.mod & pygame.KMOD_CTRL):
+                    if editor_grid.notes:
+                        temp_note_storage.append(editor_grid.notes.pop())
+                # Delete last
+                elif event.key == pygame.K_BACKSPACE:
+                    if editor_grid.notes:
+                        temp_note_storage.append(editor_grid.notes.pop())
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                clicked_note = editor_grid.get_note_at_click(menu_mouse_pos, editor_time_ms)
                 if select_note_button.check_for_input(menu_mouse_pos):
-                    editor_grid.object_place_type = "note"
+                    if editor_grid.object_place_type == "note":
+                        editor_grid.object_place_type = None
+                    else:
+                        editor_grid.object_place_type = "note"                
                 elif select_laser_button.check_for_input(menu_mouse_pos):
-                    editor_grid.object_place_type = "laser"
+                    if editor_grid.object_place_type == "laser":
+                        editor_grid.object_place_type = None
+                    else:
+                        editor_grid.object_place_type = "laser"  
+                elif add_breakpoint_button.check_for_input(menu_mouse_pos):
+                    breakpoints_dropdown.start_add_breakpoint_prompt()
+                    breakpoints_dropdown.handle_event(event, metadata, editor_grid)
                 elif (clicked_info := time_line.check_for_input(menu_mouse_pos))[0]:
-                    time_line.update(clicked_info[1])
+                    editor_time_ms = time_line.update(clicked_info[1])
                 elif editor_grid.check_for_input(menu_mouse_pos, editor_time_ms, metadata["BPM"], beat_divisor_value["value"]):
                     pass
+            elif event.type == pygame.MOUSEWHEEL:
+                if editor_grid.in_bounds(menu_mouse_pos):
+                    if editor_time_ms + event.y * 200 >= 0 and editor_time_ms + event.y * 200 <= audio_length_ms:
+                        editor_time_ms += event.y * 200
+                        time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
 
 
 
             change_song_setup_dropdown.handle_event(event, metadata)
-            choose_beat_division.handle_event(event, beat_divisor_value)
+            choose_beat_division_dropdown.handle_event(event, beat_divisor_value)
+            breakpoints_dropdown.handle_event(event, {"value": editor_grid.get_breakpoints()}, editor_grid)
 
+        
         time_line.draw(screen)
         editor_grid.draw_note_hover(screen, menu_mouse_pos, editor_time_ms, metadata["BPM"], beat_divisor_value["value"])
         select_laser_button.update(screen)
         select_note_button.update(screen)
         change_song_setup_dropdown.draw(screen)
-        choose_beat_division.draw(screen)
+        choose_beat_division_dropdown.draw(screen)
+        breakpoints_dropdown.draw(screen)
+        add_breakpoint_button.update(screen)
+        add_breakpoint_button.change_color(menu_mouse_pos)
         pygame.display.flip()
 
 
