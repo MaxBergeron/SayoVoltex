@@ -60,7 +60,7 @@ def map_loader(screen):
 
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
     player.play()
-    pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
+    #pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
     while True:
         dt = clock.tick(120)

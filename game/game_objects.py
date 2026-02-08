@@ -1,3 +1,4 @@
+from fractions import Fraction
 import pygame
 from game import constants, utils
 
@@ -70,13 +71,20 @@ class HitObject:
             )
         
     @staticmethod
-    def click_y_to_time(mouse_y, current_time_ms, ms_per_subdivision, breakpoint_time):
+    def click_y_to_time(mouse_y, current_time_ms, bpm, beat_divisor_value, get_breakpoint):
+        bpm = int(bpm)
+        beat_divisor_value = float(Fraction(beat_divisor_value))
+        ms_per_beat = 60000 / bpm
+        ms_per_subdivision = (ms_per_beat / 0.25) * beat_divisor_value
         hit_line_y = utils.scale_y(constants.HIT_LINE_Y)
-        time_offset = (hit_line_y - mouse_y) / constants.SCROLL_SPEED
-        time_clicked = current_time_ms + time_offset
-        time_difference = time_clicked - breakpoint_time
-        subdivision_index = round(time_difference / ms_per_subdivision)
-        return (subdivision_index * ms_per_subdivision) + breakpoint_time
+        distance_px = hit_line_y - mouse_y
+        time_offset_ms = distance_px / constants.SCROLL_SPEED
+        raw_time = current_time_ms + time_offset_ms
+        breakpoint_time = get_breakpoint(raw_time)
+        snapped_time = breakpoint_time + round(
+            (raw_time - breakpoint_time) / ms_per_subdivision
+        ) * ms_per_subdivision
+        return int(snapped_time)
     
     def __str__(self):
         return f"HitObject(key={self.key}, time={self.time}ms, duration={self.duration}ms)"

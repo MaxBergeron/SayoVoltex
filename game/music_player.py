@@ -42,6 +42,21 @@ class MusicPlayer:
         if self.is_playing and self.start_time is not None:
             return time.time() - self.start_time
         return self.paused_time
+    
+    def get_position_ms(self):
+        return int(self.get_position() * 1000)
+    
+    def set_position(self, position):
+        if position < 0:
+            position = 0
+        elif position > self.length:    
+            position = self.length
+        pygame.mixer.music.play(start=position)
+        self.start_time = time.time() - position
+        self.is_playing = True
+
+    def set_position_ms(self, position_ms):
+        self.set_position(position_ms / 1000)
 
     def get_length(self):
         return self.length

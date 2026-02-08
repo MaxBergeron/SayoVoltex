@@ -27,7 +27,6 @@ class NoteTool:
 
         self.object_place_type = None
         self.active = True
-        self.preview_time_ms = 0
 
 
     def draw_background(self, screen):
@@ -39,27 +38,15 @@ class NoteTool:
     
     def draw_note_hover(self, screen, position, editor_time_ms, bpm, beat_divisor_value):
         mouse_x, mouse_y = position
-        if (self.object_place_type == "note") and (utils.scale_x(490) < mouse_x < utils.scale_x(790)) and (mouse_y < utils.scale_y(670)):
+        if (self.object_place_type == "note") and self.in_bounds(position):
 
             start_x = utils.scale_x(490)
             lane_width = utils.scale_x(100)
             lane_index = int((mouse_x - start_x) / lane_width)
             lane_x = start_x + lane_index * lane_width
 
-            bpm = int(bpm)
-            beat_divisor_value = float(Fraction(beat_divisor_value))
-
-            ms_per_beat = 60000 / bpm # 1/4
-            ms_per_subdivision = (ms_per_beat / 0.25) * beat_divisor_value
-            distance_px = constants.HIT_LINE_Y - mouse_y
-            time_offset_ms = distance_px / constants.SCROLL_SPEED
-            raw_note_time = editor_time_ms + time_offset_ms
-            breakpoint_time = self.get_closest_breakpoint(raw_note_time)
-            note_time = breakpoint_time + round(
-                (raw_note_time - breakpoint_time) / ms_per_subdivision
-            ) * ms_per_subdivision
-            note_time = int(note_time)
-            breakpoint_time = self.get_closest_breakpoint(editor_time_ms + note_time)
+            note_time = game_objects.HitObject.click_y_to_time(
+            mouse_y, editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
             time_until_note = note_time - editor_time_ms
             note_y = utils.scale_y(constants.HIT_LINE_Y) - time_until_note * constants.SCROLL_SPEED
 
@@ -77,28 +64,39 @@ class NoteTool:
     def place_note(self, position, editor_time_ms, bpm, beat_divisor_value):
         mouse_x, mouse_y = position
         lane_width = utils.scale_x(100)
-        key = int((mouse_x - utils.scale_x(490)) / lane_width) + 1        
-        bpm = int(bpm)
-        beat_divisor_value = float(Fraction(beat_divisor_value))
+        grid_start_x = utils.scale_x(490)
 
-        ms_per_beat = 60000 / bpm # 1/4
-        ms_per_subdivision = (ms_per_beat / 0.25) * beat_divisor_value
-        distance_px = constants.HIT_LINE_Y - mouse_y
-        time_offset_ms = distance_px / constants.SCROLL_SPEED
-        raw_note_time = editor_time_ms + time_offset_ms
-        breakpoint_time = self.get_closest_breakpoint(raw_note_time)
-        note_time = breakpoint_time + round(
-            (raw_note_time - breakpoint_time) / ms_per_subdivision
-        ) * ms_per_subdivision
-        note_time = int(note_time)
-        # No identical notes
+        key = int((mouse_x - grid_start_x) / lane_width) + 1
+        note_time = game_objects.HitObject.click_y_to_time(
+            mouse_y, editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+        
         for note in self.notes:
             if note.key == key and note.time == note_time:
                 return
-
+            
         new_note = HitObject(key, duration=0, time=note_time)
 
         self.notes.append(new_note)
+
+    def drag_note(self, note, new_position, editor_time_ms, bpm, beat_divisor_value, note_part_clicked):
+        mouse_x, mouse_y = new_position
+        bpm = int(bpm)
+        beat_divisor_value = float(Fraction(beat_divisor_value))
+
+        new_note_time = game_objects.HitObject.click_y_to_time(
+            mouse_y, editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+        old_end_time = note.time + note.duration
+        if note.duration == 0:
+            note.duration = abs(new_note_time - note.time)
+            if new_note_time < note.time:
+                note.time = new_note_time
+        elif note_part_clicked == "head":
+            note.time = new_note_time
+            note.duration = old_end_time - note.time
+        elif note_part_clicked == "tail":
+            note.duration = new_note_time - note.time
+
+
 
     def place_laser(self, position):
         laser_width = utils.scale_x(50)
@@ -111,7 +109,6 @@ class NoteTool:
         self.active = active
         if not active:
             self.current_lane = None
-            self.preview_time_ms = None
 
     def in_bounds(self, position): 
         half_width = utils.scale_x(constants.LANE_WIDTH / 2)
@@ -127,13 +124,30 @@ class NoteTool:
     
     def get_note_at_click(self, position, editor_time_ms):
         for note in self.notes:
-            note_y = utils.scale_y(constants.HIT_LINE_Y) - (note.time - editor_time_ms) * constants.SCROLL_SPEED
-            note_rect = pygame.Rect(utils.scale_x(490 + (note.key - 1) * 100), note_y, utils.scale_x(100), utils.scale_y(20))
-            if note_rect.collidepoint(position):
-                print(f"Clicked on note: Key {note.key}, Time {note.time} ms")
-                return note
-        return None
+            note_x = utils.scale_x(490 + (note.key - 1) * 100)
+            note_width = utils.scale_x(100)
 
+            head_y = utils.scale_y(constants.HIT_LINE_Y) - ((note.time - editor_time_ms) * constants.SCROLL_SPEED)
+            head_height = utils.scale_y(20)
+            
+            if note.duration > 0:
+                hold_height = note.duration * constants.SCROLL_SPEED
+                tail_y = head_y - hold_height
+                tail_rect = pygame.Rect(note_x, tail_y, note_width, head_height)
+                
+                if tail_rect.collidepoint(position):
+                    return note, "tail"
+
+            head_rect = pygame.Rect(note_x, head_y, note_width, head_height)
+            if head_rect.collidepoint(position):
+                return note, "head" 
+            
+            note_rect = pygame.Rect(note_x, tail_y if note.duration > 0 else head_y, note_width, head_height + (hold_height if note.duration > 0 else 0))
+            if note_rect.collidepoint(position):
+                return note, "body"
+
+
+        return None, None
     
     def add_breakpoint(self, num):
         num = int(num)
@@ -149,6 +163,34 @@ class NoteTool:
             return self.breakpoints[index]
         return self.breakpoints[0]
     
+    def change_cursor_on_hover(self, position, editor_time_ms):
+        cursor_set = False  
+
+        for note in self.notes:
+            note_x = utils.scale_x(490 + (note.key - 1) * 100)
+            note_width = utils.scale_x(100)
+            head_y = utils.scale_y(constants.HIT_LINE_Y) - (
+                (note.time - editor_time_ms) * constants.SCROLL_SPEED
+            )
+            head_height = utils.scale_y(20)
+
+            if note.duration > 0:
+                tail_y = head_y - note.duration * constants.SCROLL_SPEED
+                tail_rect = pygame.Rect(note_x, tail_y, note_width, head_height)
+                if tail_rect.collidepoint(position):
+                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                    cursor_set = True
+                    break
+
+            head_rect = pygame.Rect(note_x, head_y, note_width, head_height)
+            if head_rect.collidepoint(position):
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                cursor_set = True
+                break
+
+        if not cursor_set:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
 
     
 
