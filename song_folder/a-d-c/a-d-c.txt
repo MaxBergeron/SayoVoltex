@@ -1,0 +1,27 @@
+[Metadata]
+Title: a
+Artist: b
+Creator: c
+Version: d
+Length: 100
+Scroll Speed: 0.50
+Audio Lead In: 75
+Image Path: song_folder/a-d-c/Yandere dev.png
+Audio Path: song_folder/a-d-c/Gary Come Home Punk Cover.wav
+
+// Hit Object Ordering
+// 3-key configuration (1-3), hold duration, time position,
+[HitObjects]
+1, 0, 4031
+2, 0, 4360
+3, 0, 5020
+2, 0, 6009
+1, 0, 6338
+3, 0, 6338
+2, 0, 6668
+
+// Laser Object Ordering
+// start time, end time, start position, end position
+[LaserObjects]
+75, 1064, 0.14285714285714285, 1.0
+1723, 3042, 1.0, 0.14285714285714285

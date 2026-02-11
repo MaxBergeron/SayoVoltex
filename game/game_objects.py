@@ -92,7 +92,7 @@ class HitObject:
 
 
 class LaserObject:
-    def __init__(self, start_time, end_time, start_pos, end_pos):
+    def __init__(self, start_time, end_time, start_pos, end_pos, editor=None):
         self.width = utils.scale_x(50)
         self.half_width = utils.scale_x(50) / 2
         self.start_time = int(start_time)
@@ -137,6 +137,7 @@ class LaserObject:
         self.total_hold_time = 0
 
         self.color = None
+        self.editor = editor
 
         self.points = []
 
@@ -144,6 +145,10 @@ class LaserObject:
     def normalize_position(pos):
         pos = int(pos)
         return (pos - 1) / 7
+    
+    @staticmethod
+    def denormalize_position(norm):
+        return int(norm * 7) + 1
 
     # Computes the trapezoid points of the laser for the current frame.
     def update_points(self, current_time):
@@ -226,7 +231,7 @@ class LaserObject:
             ]
 
     def draw(self, screen):
-        if not self.points or self.completed:
+        if (not self.points or self.completed) and not self.editor:
             return
         
         self.assign_laser_color()
@@ -246,15 +251,12 @@ class LaserObject:
         screen.blit(laser_surf, (min_x, min_y))
 
     def get_x_at_y(self, current_time, y):
-        """
-        Returns the left and right X positions of the laser at a specific Y (vertical line)
-        based on the current trapezoid shape.
-        """
         self.update_points(current_time)
     
         if not self.points or len(self.points) < 4:
             return (None, None)
         if current_time < self.start_time or current_time > self.end_time and self.start_time != self.end_time:
+            print(f"Current time {current_time} is outside laser time range {self.start_time} to {self.end_time}")
             return (None, None)
 
         # We'll check each edge of the polygon and see if it crosses Y
@@ -283,6 +285,38 @@ class LaserObject:
                     right_x = x_at_y
 
         return (left_x, right_x)
+    
+    def get_x_at_y_for_click(self, editor_time_ms, y):
+        # Update polygon using editor time (so it matches screen)
+        self.update_points(editor_time_ms)
+
+        if not self.points or len(self.points) < 4:
+            return (None, None)
+
+        intersections = []
+
+        # Check every polygon edge
+        for i in range(len(self.points)):
+            x1, y1 = self.points[i]
+            x2, y2 = self.points[(i + 1) % len(self.points)]
+
+            # Does this edge cross horizontal line y?
+            if (y1 <= y <= y2) or (y2 <= y <= y1):
+
+                if y2 - y1 != 0:
+                    t = (y - y1) / (y2 - y1)
+                    x_at_y = x1 + t * (x2 - x1)
+                else:
+                    x_at_y = x1
+
+                intersections.append(x_at_y)
+
+        # Need at least 2 intersections for a filled shape
+        if len(intersections) < 2:
+            return (None, None)
+
+        intersections.sort()
+        return (intersections[0], intersections[-1])
 
     @staticmethod
     def y_from_time(note_time, current_time):

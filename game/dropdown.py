@@ -26,28 +26,10 @@ class Dropdown:
 
     def handle_event(self, event, data, editor_grid=None):
         if self.input_active and event.type == pygame.KEYDOWN:
-            if self.title == "Breakpoints" and not self.popup_mode == "add_breakpoint":
-                if event.key == pygame.K_y:
-                    data["value"].remove(self.key_being_edited)
-                    self.input_active = False
-                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
-                    self.input_active = False
-                elif event.key == pygame.K_RETURN:
-                    if self.user_input.strip() != "":
-                        data[self.key_being_edited] = self.user_input.strip()
-                    self.input_active = False
-                elif event.key == pygame.K_ESCAPE:
-                    self.input_active = False
-                elif event.key == pygame.K_BACKSPACE:
-                    self.user_input = self.user_input[:-1]
-                else:
-                    self.user_input += event.unicode
-
             if self.popup_mode == "add_breakpoint":
                 if event.key == pygame.K_RETURN:
                     if self.user_input.strip().isdigit():
-                        new_bp = int(self.user_input.strip())
-                        editor_grid.add_breakpoint(new_bp)
+                        editor_grid.add_breakpoint(int(self.user_input))
                     self.user_input = ""
                     self.input_active = False
                     self.popup_mode = None
@@ -60,6 +42,18 @@ class Dropdown:
                 else:
                     if event.unicode.isdigit():
                         self.user_input += event.unicode
+
+            else:
+                if event.key == pygame.K_RETURN:
+                    if self.user_input.strip():
+                        data[self.key_being_edited] = self.user_input.strip()
+                    self.input_active = False
+                elif event.key == pygame.K_ESCAPE:
+                    self.input_active = False
+                elif event.key == pygame.K_BACKSPACE:
+                    self.user_input = self.user_input[:-1]
+                else:
+                    self.user_input += event.unicode
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):

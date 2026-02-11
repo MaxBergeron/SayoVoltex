@@ -24,6 +24,10 @@ class NoteTool:
         self.lasers = []
         self.breakpoints= []
         self.add_breakpoint(0)
+        self.laser_start = None
+        self.laser_end = None
+        self.laser_temp_position = None
+        self.initial_editor_time_ms = 0
 
         self.object_place_type = None
         self.active = True
@@ -36,9 +40,11 @@ class NoteTool:
         for note in self.notes:
             note.draw(screen, editor_time_ms)
     
-    def draw_note_hover(self, screen, position, editor_time_ms, bpm, beat_divisor_value):
+    def draw_note_hover(self, screen, position, editor_time_ms, bpm, beat_divisor_value, audio_length_ms):
         mouse_x, mouse_y = position
-        if (self.object_place_type == "note") and self.in_bounds(position):
+        distance_px = utils.scale_y(constants.HIT_LINE_Y) - mouse_y
+        note_time_ms = editor_time_ms + (distance_px / constants.SCROLL_SPEED)
+        if (self.object_place_type == "note") and self.in_bounds(position) and note_time_ms >= 0 and note_time_ms <= audio_length_ms:
 
             start_x = utils.scale_x(490)
             lane_width = utils.scale_x(100)
@@ -53,19 +59,52 @@ class NoteTool:
             screen.blit(self.note_hover_image, (lane_x, note_y))
 
 
-    def check_for_input(self, position, editor_time_ms, bpm, beat_divisor_value):
-        if self.in_bounds(position):
-            if self.object_place_type == "note":
-                self.place_note(position, editor_time_ms, bpm, beat_divisor_value)
-            elif self.object_place_type == "laser":
-                self.place_laser(position, editor_time_ms)
-        return self.rect.collidepoint(position)
-    
-    def place_note(self, position, editor_time_ms, bpm, beat_divisor_value):
+    def check_for_input(self, position, editor_time_ms, bpm, beat_divisor_value, audio_length_ms, screen):
+        if not self.in_bounds(position):
+            return None
+        
+        clicked_note = self.get_note_at_click(position, editor_time_ms)
+        if clicked_note[0]:
+            return clicked_note[0]
+
+        clicked_laser = self.get_laser_at_click(position, editor_time_ms)
+        if clicked_laser:
+            return clicked_laser
+
+        if self.object_place_type == "laser":
+            if self.laser_start is None:
+                # First click
+                self.laser_start = position
+                self.laser_temp_position = position
+                self.initial_editor_time_ms = editor_time_ms
+                return None
+            else:
+                # Second click
+                self.laser_end = position
+                hit_object = self.place_laser(
+                    self.laser_start, self.laser_end,
+                    self.initial_editor_time_ms, editor_time_ms,
+                    bpm, beat_divisor_value, audio_length_ms)
+                self.laser_start = None
+                self.laser_end = None
+                return hit_object
+
+        if self.object_place_type == "note":
+            hit_object = self.place_note(position, editor_time_ms, bpm, beat_divisor_value, audio_length_ms)
+            return hit_object
+
+        return None
+
+    def place_note(self, position, editor_time_ms, bpm, beat_divisor_value, audio_length_ms):
         mouse_x, mouse_y = position
         lane_width = utils.scale_x(100)
         grid_start_x = utils.scale_x(490)
+        distance_px = utils.scale_y(constants.HIT_LINE_Y) - mouse_y
+        note_time_ms = editor_time_ms + (distance_px / constants.SCROLL_SPEED)
 
+        if note_time_ms < 0 or note_time_ms > audio_length_ms:
+            return
+        
         key = int((mouse_x - grid_start_x) / lane_width) + 1
         note_time = game_objects.HitObject.click_y_to_time(
             mouse_y, editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
@@ -77,6 +116,7 @@ class NoteTool:
         new_note = HitObject(key, duration=0, time=note_time)
 
         self.notes.append(new_note)
+        return new_note
 
     def drag_note(self, note, new_position, editor_time_ms, bpm, beat_divisor_value, note_part_clicked):
         mouse_x, mouse_y = new_position
@@ -98,12 +138,49 @@ class NoteTool:
 
 
 
-    def place_laser(self, position):
+    def place_laser(self, position_1, position_2, initial_editor_time_ms, editor_time_ms, bpm, beat_divisor_value, audio_length_ms):
         laser_width = utils.scale_x(50)
-        start_pos = int((position[0] - self.pos_x) / laser_width) + 1       
-        self.lasers.append(LaserObject(0, 0, start_pos, 0))
-        print (start_pos)
+        start_pos = int((position_1[0] - self.pos_x) / laser_width) + 1
+        end_pos = int((position_2[0] - self.pos_x) / laser_width) + 1       
+        start_time = game_objects.HitObject.click_y_to_time(
+            position_1[1], initial_editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+        end_time = game_objects.HitObject.click_y_to_time(
+            position_2[1], editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+        if start_time > end_time:
+            start_time, end_time = end_time, start_time
+            start_pos, end_pos = end_pos, start_pos 
+        new_laser = LaserObject(start_time, end_time, start_pos, end_pos, True)
+        self.lasers.append(new_laser)
+        return new_laser
 
+    def draw_laser_hover(self, screen, position, editor_time_ms, bpm, beat_divisor_value, audio_length_ms):
+        if self.object_place_type == "laser" and self.in_bounds(position):
+            mouse_x, mouse_y = position
+            laser_width = utils.scale_x(50)
+            grid_start_x = utils.scale_x(440)
+            distance_px = utils.scale_y(constants.HIT_LINE_Y) - mouse_y
+            laser_time_ms = editor_time_ms + (distance_px / constants.SCROLL_SPEED)
+
+            if laser_time_ms < 0 or laser_time_ms > audio_length_ms:
+                return
+            
+            start_pos = int((self.laser_temp_position[0] - self.pos_x) / laser_width) + 1
+            end_pos = int((position[0] - self.pos_x) / laser_width) + 1       
+            start_time = game_objects.HitObject.click_y_to_time(
+                self.laser_temp_position[1], self.initial_editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+            end_time = game_objects.HitObject.click_y_to_time(
+                position[1], editor_time_ms, bpm, beat_divisor_value, self.get_closest_breakpoint)
+            if start_time > end_time:
+                start_time, end_time = end_time, start_time
+                start_pos, end_pos = end_pos, start_pos 
+            temp_laser = LaserObject(start_time, end_time, start_pos, end_pos, True)
+            temp_laser.update_points(editor_time_ms)
+            temp_laser.draw(screen)
+
+    def draw_lasers(self, screen, editor_time_ms):
+        for laser in self.lasers:
+            laser.update_points(editor_time_ms)
+            laser.draw(screen)
 
     def set_active(self, active):
         self.active = active
@@ -116,7 +193,7 @@ class NoteTool:
             if self.rect.left + half_width < position[0] < self.rect.right - half_width and self.rect.top < position[1] < self.rect.bottom:
                 return True 
         elif (self.object_place_type == "laser"): 
-            if self.rect.left < position[0] < self.rect.right and self.rect.top < position[1] < self.rect.bottom: 
+            if self.rect.left < position[0] < self.rect.right and self.rect.top < position[1] < self.rect.bottom:
                 return True
         elif (self.object_place_type == None):
                 return True 
@@ -149,6 +226,20 @@ class NoteTool:
 
         return None, None
     
+    def get_laser_at_click(self, position, editor_time_ms):
+        mouse_x, mouse_y = position
+
+        for laser in self.lasers:
+            left_x, right_x = laser.get_x_at_y_for_click(editor_time_ms, mouse_y)
+
+            if left_x is None:
+                continue
+
+            if left_x <= mouse_x <= right_x:
+                return laser
+
+        return None
+
     def add_breakpoint(self, num):
         num = int(num)
         if num not in self.breakpoints:
@@ -190,6 +281,50 @@ class NoteTool:
 
         if not cursor_set:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+
+
+    def save_map(self, file_path, metadata, audio_length_ms):
+        with open(file_path, "w", encoding="utf-8") as f:
+
+            f.write("[Metadata]\n")
+            f.write(f"Title: {metadata['Title']}\n")
+            f.write(f"Artist: {metadata['Artist']}\n")
+            f.write(f"Creator: {metadata['Creator']}\n")
+            f.write(f"Version: {metadata['Version']}\n")
+            length = audio_length_ms // 1000
+            f.write(f"Length: {length}\n")
+            scroll_speed = float(metadata["Scroll Speed"])
+            f.write(f"Scroll Speed: {scroll_speed:.2f}\n")            
+            f.write(f"Audio Lead In: {metadata['Audio Lead In']}\n")
+            f.write(f"Image Path: {metadata['Image Path']}\n")
+            f.write(f"Audio Path: {metadata['Audio Path']}\n")
+
+            f.write("\n")
+
+            f.write("// Hit Object Ordering\n")
+            f.write("// 3-key configuration (1-3), hold duration, time position,\n")
+            f.write("[HitObjects]\n")
+
+            for note in self.notes:
+                key = note.key
+                duration = note.duration
+                time = note.time
+
+                f.write(f"{key}, {duration}, {time}\n")
+
+            f.write("\n")
+
+            f.write("// Laser Object Ordering\n")
+            f.write("// start time, end time, start position, end position\n")
+            f.write("[LaserObjects]\n")
+
+            for laser in self.lasers:
+                start = laser.start_time
+                end = laser.end_time
+                start_pos = game_objects.LaserObject.denormalize_position(laser.start_pos)
+                end_pos = game_objects.LaserObject.denormalize_position(laser.end_pos)
+                f.write(f"{start}, {end}, {start_pos}, {end_pos}\n")
 
 
     

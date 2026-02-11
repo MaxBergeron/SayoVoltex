@@ -42,3 +42,5 @@ Audio Path: song_folder/song_3\Metronome 120 BPM - QuickSounds.com.mp3
 // Laser Object Ordering
 // start time, end time, start position, end position
 [LaserObjects]
+0, 1000, 1, 8
+3000, 5000, 8, 2

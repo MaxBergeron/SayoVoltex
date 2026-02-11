@@ -53,7 +53,9 @@ class MusicPlayer:
             position = self.length
         pygame.mixer.music.play(start=position)
         self.start_time = time.time() - position
-        self.is_playing = True
+        if not self.is_playing:
+            self.is_playing = True
+            self.pause()
 
     def set_position_ms(self, position_ms):
         self.set_position(position_ms / 1000)
