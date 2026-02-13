@@ -8,32 +8,7 @@ Scroll Speed: 0.50
 BPM: 172
 Audio Lead In: 0
 Image Path: song_folder/song_3 copy\bg.png
-Audio Path: song_folder/song_3 copy\M.I.A. - Paper Planes.mp3
-
-// Hit Object Ordering
-// 3-key configuration (1-3), hold duration, time position, 
-[HitObjects]
-
-// Laser Object Ordering
-// start time, end time, start position, end position
-[LaserObjects]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Audio Path: song_folder/Susume-Easy-Corgo\Gary Come Home Punk Cover.wav
 
 // Hit Object Ordering
 // 3-key configuration (1-3), hold duration, time position, 

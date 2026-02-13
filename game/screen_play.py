@@ -35,7 +35,7 @@ def play_menu(screen):
     for i, tile in enumerate(song_tiles):
         tile.position = (
             utils.scale_x(1080),
-            utils.scale_y(100) + i * utils.scale_y(100)
+            utils.scale_y(20) + i * utils.scale_y(100)
         )
 
     map_info = map_details.MapDetails()
@@ -78,6 +78,19 @@ def play_menu(screen):
                             constants.SELECTED_TILE = tile
                             constants.SCROLL_SPEED = tile.scroll_speed
                             return states.MAP
+            elif event.type == pygame.MOUSEWHEEL:
+                if not song_tiles:
+                    return
+                
+                scroll_amount = -event.y * utils.scale_y(25)
+
+                if song_tiles[0].position[1] + scroll_amount < utils.scale_y(20):
+                    break
+                if song_tiles[-1].position[1] + scroll_amount > utils.scale_y(630):
+                    break
+
+                for tile in song_tiles:
+                    tile.position = (tile.position[0],tile.position[1] + scroll_amount)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return states.MENU

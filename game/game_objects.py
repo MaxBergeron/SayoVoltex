@@ -256,7 +256,6 @@ class LaserObject:
         if not self.points or len(self.points) < 4:
             return (None, None)
         if current_time < self.start_time or current_time > self.end_time and self.start_time != self.end_time:
-            print(f"Current time {current_time} is outside laser time range {self.start_time} to {self.end_time}")
             return (None, None)
 
         # We'll check each edge of the polygon and see if it crosses Y

@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, threading
 from game import button, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
 
 active_popup = None
@@ -35,16 +35,19 @@ def map_loader(screen):
     
     cursor = laser_cursor.LaserCursor()
 
-    scroll_speed = constants.SELECTED_TILE.scroll_speed
-
     paused = False
+    wait_at_start = True
     global active_popup
-
+    
+    elapsed_wait = 0
+    whistles_played = [False, False, False]  
+    WAIT_TIME = constants.INITIAL_WAIT_TIME_MS
+    wait_time = WAIT_TIME
 
     x_center = constants.BASE_W // 2
     y_center = constants.BASE_H // 2
 
-
+    current_time_ms = 0
     clock = pygame.time.Clock()
 
     hit_sound = pygame.mixer.Sound(constants.HIT_SOUND_PATH)
@@ -58,13 +61,70 @@ def map_loader(screen):
     laser_objects = hit_object_data["LaserObjects"]
     chain_lasers(laser_objects)
 
+    player = None
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
-    player.play()
-    #pygame.time.wait(constants.SELECTED_TILE.audio_lead_in)
 
     while True:
+        print(f"WAIT TIME IS {wait_time}ms")
+
         dt = clock.tick(120)
         knob_input = 0
+        print(f"dt is {dt}ms")
+        if wait_at_start:
+            wait_time -= dt
+            if not whistles_played[0]:
+                print(f"Whistle Played {wait_time}ms")
+                whistle_sound.play()
+                whistles_played[0] = True
+            if wait_time <= 0:
+                wait_at_start = False
+                player.play()
+            map_mouse_pos = pygame.mouse.get_pos()
+            print(f"Current time {wait_time}ms")
+            
+            screen.blit(dark_map_background, (0, 0))
+            
+            for note in hit_object_data["HitObjects"]:
+                if note.hit or note.hold_complete or note.miss:
+                    continue
+                note.draw(screen, 0)
+
+            for laser in hit_object_data["LaserObjects"]:
+                laser.update_points(0)
+                laser.draw(screen)
+
+            screen.blit(map_lines_outline, (utils.scale_x(x_center - 200), 0))
+
+            for counter in counters.values():
+                counter.update(screen)    
+
+            wait_time_thirds = [WAIT_TIME / 3, 2 * WAIT_TIME / 3]
+            elapsed_wait += dt
+            for i, t in enumerate(wait_time_thirds):
+                if elapsed_wait > t and not whistles_played[i + 1]:
+                    print(f"Whistle Played {wait_time}ms")
+                    whistle_sound.play()
+                    whistles_played[i + 1] = True
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        paused = True
+                        wait_at_start = False
+                        continue
+                    if event.key == utils.key_bindings["key_CW"]:
+                        knob_input += 1
+                    elif event.key == utils.key_bindings["key_CCW"]:
+                        knob_input -= 1
+            cursor.update_movement(knob_input, dt / 1000)
+            cursor.draw(screen)
+
+            pygame.display.flip()
+            continue  # skip the rest of the loop while paused
+
 
         # Pause handling
         if paused:
@@ -164,7 +224,6 @@ def map_loader(screen):
                 
                 # Handle cursor movement
                 knob_input = 0
-                keys = pygame.key.get_pressed()
                 if event.key == utils.key_bindings["key_CW"]:
                     knob_input += 1
                 elif event.key == utils.key_bindings["key_CCW"]:
@@ -281,7 +340,8 @@ def draw_lanes(screen, x_center):
     )
 
 def pause_menu(screen, player):
-    player.pause()
+    if player is not None:
+        player.pause()
 
     popup_width, popup_height = utils.scale_x(500), utils.scale_y(350)
     popup_x = (screen.get_width() - popup_width) // 2
