@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, constants, states, utils
+from game import button, constants, states, utils, settings
 
 def set_resolution_menu(screen):
     pygame.display.set_caption("Set Resolution")
@@ -37,6 +37,8 @@ def set_resolution_menu(screen):
                              text_input="2560x1440", font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
     ]
+
+    game_settings = settings.load_settings()
 
     while True:
         current_size = screen.get_size()
@@ -92,23 +94,32 @@ def set_resolution_menu(screen):
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
                 if waiting_for_selection:
                     # ONLY popup buttons
                     if resolution_buttons[0].check_for_input(set_resolution_mouse_pos):
+                        game_settings["fullscreen"] = False
+                        game_settings["resolution"] = [1280, 720]
+                        settings.save_settings(game_settings)
                         screen = pygame.display.set_mode((1280, 720))
                         constants.SCALE_X = 1280 / constants.BASE_W
                         constants.SCALE_Y = 720 / constants.BASE_H
                         waiting_for_selection = False
 
                     elif resolution_buttons[1].check_for_input(set_resolution_mouse_pos):
+                        game_settings["fullscreen"] = False
+                        game_settings["resolution"] = [1920, 1080]
+                        settings.save_settings(game_settings)
                         screen = pygame.display.set_mode((1920, 1080))
                         constants.SCALE_X = 1920 / constants.BASE_W
                         constants.SCALE_Y = 1080 / constants.BASE_H
                         waiting_for_selection = False
 
                     elif resolution_buttons[2].check_for_input(set_resolution_mouse_pos):
+                        game_settings["fullscreen"] = False
+                        game_settings["resolution"] = [2560, 1440]
+                        settings.save_settings(game_settings)
                         screen = pygame.display.set_mode((2560, 1440))
                         constants.SCALE_X = 2560 / constants.BASE_W
                         constants.SCALE_Y = 1440 / constants.BASE_H
@@ -124,6 +135,8 @@ def set_resolution_menu(screen):
 
                     if full_screen_button.check_for_input(set_resolution_mouse_pos):
                         screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                        game_settings["fullscreen"] = True
+                        settings.save_settings(game_settings)
                         constants.SCALE_X = screen.get_width() / constants.BASE_W
                         constants.SCALE_Y = screen.get_height() / constants.BASE_H
 

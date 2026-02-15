@@ -1,16 +1,18 @@
-from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor
+from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings
 from game import states, utils, constants
 import pygame, sys
 
 pygame.init()
-screen = pygame.display.set_mode((constants.BASE_W, constants.BASE_H))
+game_settings = settings.load_settings()
+screen = pygame.display.set_mode((game_settings["resolution"][0], game_settings["resolution"][1]), pygame.FULLSCREEN if game_settings["fullscreen"] else 0)
+pygame.scrap.init()
 constants.SCALE_X = screen.get_width() / constants.BASE_W
 constants.SCALE_Y = screen.get_height() / constants.BASE_H
 print(f"Scale X: {constants.SCALE_X}, Scale Y: {constants.SCALE_Y}")
 
 
 state = states.MENU
-metadata, objectdata = None, None  
+metadata, objectdata, map_path = None, None, None  
 
 while True:
     result = None  
@@ -33,7 +35,7 @@ while True:
     elif state == states.EDITOR_INITIALIZE:
         result = screen_editor_initialize.editor_initialize_menu(screen)
     elif state == states.EDITOR:
-        result = screen_editor.editor_menu(screen, metadata, objectdata)  
+            result = screen_editor.editor_menu(screen, metadata, objectdata, map_path)  
 
     elif state == states.QUIT:
         pygame.quit()
@@ -41,7 +43,7 @@ while True:
 
     # Handle return values
     if isinstance(result, tuple):
-        state, metadata, objectdata = result
+        state, metadata, objectdata, map_path = result
     else:
         state = result
 

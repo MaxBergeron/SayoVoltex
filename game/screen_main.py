@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, states, utils, constants
+from game import button, settings, states, utils, constants
 
 
 
@@ -7,27 +7,27 @@ from game import button, states, utils, constants
 
 def main_menu(screen):
     pygame.display.set_caption("Menu")  
-    main_menu_background = pygame.image.load("assets/backgrounds/main_menu_background.jpg")
+    main_menu_background = pygame.image.load("assets/backgrounds/start_screen_background.png")
     main_menu_background = pygame.transform.scale(main_menu_background, screen.get_size()).convert()
 
-    menu_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("MAIN MENU", True, "#b68f40")
-    menu_text_rect = menu_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+    sayovoltex_logo = pygame.image.load("assets/images/sayovoltex_logo.png").convert_alpha()
+    sayovoltex_logo = pygame.transform.scale(sayovoltex_logo, (utils.scale_x(500), utils.scale_y(500)))
 
-    play_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(250)), 
-                             text_input="PLAY", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)), 
+    play_button = button.Button(image=sayovoltex_logo, pos=(utils.scale_x(640), utils.scale_y(300)), 
+                             text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
-    options_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(400)), 
-                                text_input="OPTIONS", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)), 
+    options_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(600)), 
+                                text_input="OPTIONS", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                                 base_color="#d7fcd4", hovering_color="White")
-    quit_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(550)), 
-                             text_input="QUIT", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM)),
+    quit_button = button.Button(image=None, pos=(utils.scale_x(1130), utils.scale_y(650)), 
+                             text_input="QUIT", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)),
                              base_color="#d7fcd4", hovering_color="White")
     editor_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
                              text_input="EDITOR", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)),
                              base_color="#d7fcd4", hovering_color="White")
 
     # Load image assets for later
-    utils.load_assets()
+    utils.load_assets()    
     
     while True:
         screen.blit(main_menu_background, (0, 0))
@@ -36,8 +36,6 @@ def main_menu(screen):
 
 
         
-        screen.blit(menu_text, menu_text_rect)
-
         for b in [play_button, options_button, quit_button, editor_button]:
             b.change_color(menu_mouse_pos)
             b.update(screen)
@@ -47,7 +45,7 @@ def main_menu(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if play_button.check_for_input(menu_mouse_pos):
                     return states.PLAY
                 elif options_button.check_for_input(menu_mouse_pos):

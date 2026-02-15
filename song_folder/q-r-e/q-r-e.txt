@@ -5,6 +5,7 @@ Creator: e
 Version: r
 Length: 100
 Scroll Speed: 0.50
+BPM: 120
 Audio Lead In: 75
 Image Path: song_folder/q-r-e/Yandere dev.png
 Audio Path: song_folder/q-r-e/Gary Come Home Punk Cover.wav

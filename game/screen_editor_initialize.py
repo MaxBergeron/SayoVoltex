@@ -131,10 +131,10 @@ def editor_initialize_menu(screen):
                         return states.MENU
                     elif test_button.check_for_input(menu_mouse_pos):
                         metadata = assign_metadata("Title", "artist", "version", "0.35", "182", "0", "creator", "song_folder\Susume-Easy-Corgo\Gary Come Home Punk Cover.wav", "image_file_path")
-                        return states.EDITOR, metadata, objectdata
+                        return states.EDITOR, metadata, objectdata, None
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        return states.MENU, metadata, objectdata
+                        return states.MENU
 
         # New song 
         if not song_parameters_set and editor_method_chosen == "new":
@@ -157,11 +157,26 @@ def editor_initialize_menu(screen):
                         text_user_image_file_path = font_xtiny.render(display_image_file_path, True, "#b68f40")
                         text_user_image_file_rect = text_user_image_file_path.get_rect(center=(utils.scale_x(900), utils.scale_y(280)))
                     elif back_button.check_for_input(menu_mouse_pos):
+                        for input_box in popup_group:
+                            input_box.text = ""
+                            input_box.render_text()
                         editor_method_chosen = None
                     elif submit_button.check_for_input(menu_mouse_pos):
                         if any(box.text == "" for box in popup_group) or not audio_file_path_got or not image_file_path_got:
                             display_error = True
                             error_message = "Please fill in all fields and upload files."
+                        elif not user_audio_file_path.lower().endswith(('.mp3', '.ogg')):
+                            display_error = True
+                            error_message = "Invalid audio file type. Please upload an mp3 or ogg file."
+                        elif not user_image_file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
+                            display_error = True
+                            error_message = "Invalid image file type. Please upload a png, jpg, or jpeg file."
+                        elif get_audio_length(user_audio_file_path) == 0:
+                            display_error = True
+                            error_message = "Audio file length is 0. Please upload a valid audio file."
+                        elif not scroll_speed_input.text[0].isdigit() or not bpm_input.text.isdigit() or not audio_lead_in_input.text.isdigit():
+                            display_error = True
+                            error_message = "Scroll Speed, BPM, and Audio Lead In must be a number."
                         else:
                             song_parameters_set = True
                             folder_path = f"song_folder/{title_input.text}-{version_input.text}-{creator_input.text}"
@@ -176,13 +191,16 @@ def editor_initialize_menu(screen):
                                 metadata = assign_metadata(title_input.text, artist_input.text, version_input.text, 
                                                  scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
                                                  creator_input.text, audio_file_path, image_file_path)
-                                return states.EDITOR, metadata, map_path
+                                return states.EDITOR, metadata, objectdata, map_path
                             else:
                                 display_error = True
                                 error_message = "Song file already exists."
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         editor_method_chosen = None
+                        for input_box in popup_group:
+                            input_box.text = ""
+                            input_box.render_text()
             if audio_file_path_got:
                 screen.blit(text_user_audio_file_path, text_user_audio_file_rect)
             if image_file_path_got:
@@ -206,12 +224,12 @@ def editor_initialize_menu(screen):
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if upload_song_folder_button.check_for_input(menu_mouse_pos):
                         folder_path, success = upload_song_folder()
-                        map_file_path = utils.find_map_file(folder_path)
+                        map_path = utils.find_map_file(folder_path)
                         # Go to editor
                         if success:
                             song_parameters_set = True 
-                            metadata, objectdata = utils.parse_song_file(map_file_path)
-                            return states.EDITOR, metadata, map_file_path
+                            metadata, objectdata = utils.parse_song_file(map_path)
+                            return states.EDITOR, metadata, objectdata, map_path
                     elif back_button.check_for_input(menu_mouse_pos):
                         editor_method_chosen = None
                 elif event.type == pygame.KEYDOWN:
@@ -293,7 +311,7 @@ def choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_s
     test_button.change_color(menu_mouse_pos)
     test_button.update(screen)
 
-def create_song_file(map_path, title, artist, version, scroll_speed, bpm, audio_lead_in, creator, audio_file_path, image_file_path):
+def create_song_file(map_path, title, artist, version, scroll_speed, BPM, audio_lead_in, creator, audio_file_path, image_file_path):
     with open(map_path, "w") as f:
         f.write("[Metadata]\n")
 
@@ -303,7 +321,7 @@ def create_song_file(map_path, title, artist, version, scroll_speed, bpm, audio_
         f.write(f"Version: {version}\n")
         f.write(f"Length: {get_audio_length(audio_file_path)}\n")
         f.write(f"Scroll Speed: {scroll_speed}\n")
-        f.write(f"BPM: {bpm}\n")
+        f.write(f"BPM: {BPM}\n")
         f.write(f"Audio Lead In: {audio_lead_in}\n")
         f.write(f"Image Path: {image_file_path}\n")
         f.write(f"Audio Path: {audio_file_path}\n")
@@ -328,7 +346,7 @@ def get_audio_file_path():
     file_path = filedialog.askopenfilename(
         title="Select a song file",
         initialdir=downloads_folder,
-        filetypes=(("audio files", "*.mp3 *.wav *.ogg"), ("All files", "*.*"))
+        filetypes=(("audio files", "*.mp3 *.ogg"), ("All files", "*.*"))
     )
     root.destroy()
 
@@ -456,10 +474,10 @@ def display_error_message(screen, message):
         screen.blit(surf, rect)
         y += surf.get_height() + line_spacing
 
-def assign_metadata(title, artist, version, scroll_speed, bpm, audio_lead_in, creator, audio_file_path, image_file_path):
+def assign_metadata(title, artist, version, scroll_speed, BPM, audio_lead_in, creator, audio_file_path, image_file_path):
     metadata = {
         "Title": title, "Artist": artist, "Version": version,
-        "Scroll Speed": scroll_speed, "BPM": bpm, "Audio Lead In": audio_lead_in,
+        "Scroll Speed": scroll_speed, "BPM": BPM, "Audio Lead In": audio_lead_in,
         "Creator": creator, "Audio Path": audio_file_path, "Image Path": image_file_path
     }
     return metadata

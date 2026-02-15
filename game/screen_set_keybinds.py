@@ -1,5 +1,5 @@
 import pygame, sys
-from game import button, constants, states, utils
+from game import button, constants, states, utils, settings
 
 
 
@@ -39,9 +39,15 @@ def set_keybinds_menu(screen):
     set_keyCW_button = button.Button(image=set_wheel_button_image, pos=(utils.scale_x(525), utils.scale_y(420)),
                                 text_input="", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                                 base_color="#d7fcd4", hovering_color="White")
+    
+    apply_button = button.Button(image=None, pos=(utils.scale_x(1130), utils.scale_y(650)),
+                                text_input="Apply", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)),
+                                base_color="#d7fcd4", hovering_color="White")
 
     waiting_for_key = False
     key_to_bind = None
+    game_settings = settings.load_settings()
+
                                                      
     while True:
         
@@ -52,7 +58,7 @@ def set_keybinds_menu(screen):
 
         screen.blit(set_keybinds_text, set_keybinds_text_rect)
 
-        for b in [set_key1_button, set_key2_button, set_key3_button, set_keyCCW_button, set_keyCW_button, back_button]:
+        for b in [set_key1_button, set_key2_button, set_key3_button, set_keyCCW_button, set_keyCW_button, back_button, apply_button]:
             b.change_color(set_keybinds_mouse_pos)
             b.update(screen)
 
@@ -60,10 +66,12 @@ def set_keybinds_menu(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if not waiting_for_key:
                     if back_button.check_for_input(set_keybinds_mouse_pos):
                         return states.MENU
+                    if apply_button.check_for_input(set_keybinds_mouse_pos):
+                        settings.save_settings(game_settings)
                     if set_key1_button.check_for_input(set_keybinds_mouse_pos):
                         print("Press a key to bind to Key 1")
                         waiting_for_key = True
@@ -90,7 +98,7 @@ def set_keybinds_menu(screen):
                     if event.key == pygame.K_ESCAPE:
                         waiting_for_key = False  
                     else:
-                        utils.set_keybinding(key_to_bind, event.key)
+                        game_settings[key_to_bind] = event.key
                         waiting_for_key = False
                 else:
                     if event.key == pygame.K_ESCAPE:

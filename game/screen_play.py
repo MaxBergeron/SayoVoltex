@@ -1,5 +1,5 @@
 import pygame, sys, os
-from game import button, states, utils, constants, song_tile, map_details
+from game import button, music_player, settings, states, utils, constants, song_tile, map_details
 
 
 
@@ -17,10 +17,12 @@ def play_menu(screen):
     back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
                              text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
+    game_settings = settings.load_settings()
 
     song_tiles = []
 
     selected_tile = None
+    player = None
 
     song_folder = "song_folder"
     for entry in os.listdir(song_folder):
@@ -61,9 +63,16 @@ def play_menu(screen):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if back_button.check_for_input(play_mouse_pos):
+                    if player and player.is_playing:
+                        player.stop()
                     return states.MENU
                 for tile in song_tiles:
                     if tile.check_for_input(play_mouse_pos):
+                        if player and player.is_playing:
+                            player.stop()
+                        player = music_player.MusicPlayer(tile.audio_path)
+                        player.set_volume(game_settings["music_volume"])
+                        player.play()
                         if selected_tile != tile:
                             selected_tile = tile
 
@@ -75,6 +84,7 @@ def play_menu(screen):
                             map_info.scroll_speed = tile.scroll_speed
                             map_info.BPM = tile.BPM
                         else:
+                            player.stop()
                             constants.SELECTED_TILE = tile
                             constants.SCROLL_SPEED = tile.scroll_speed
                             return states.MAP
@@ -82,17 +92,29 @@ def play_menu(screen):
                 if not song_tiles:
                     return
                 
-                scroll_amount = -event.y * utils.scale_y(25)
+                scroll_amount = event.y * utils.scale_y(25)
 
-                if song_tiles[0].position[1] + scroll_amount < utils.scale_y(20):
-                    break
-                if song_tiles[-1].position[1] + scroll_amount > utils.scale_y(630):
-                    break
+                TOP_LIMIT = utils.scale_y(20)
+                BOTTOM_LIMIT = utils.scale_y(630)
+
+                top_y = song_tiles[0].position[1]
+                bottom_y = song_tiles[-1].position[1]
+
+                # Clamp upward scroll
+                if top_y + scroll_amount > TOP_LIMIT:
+                    scroll_amount = TOP_LIMIT - top_y
+
+                # Clamp downward scroll
+                if bottom_y + scroll_amount < BOTTOM_LIMIT:
+                    scroll_amount = BOTTOM_LIMIT - bottom_y
 
                 for tile in song_tiles:
-                    tile.position = (tile.position[0],tile.position[1] + scroll_amount)
+                    tile.position = (tile.position[0], tile.position[1] + scroll_amount)
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    if player and player.is_playing:
+                        player.stop()
                     return states.MENU
                 
 

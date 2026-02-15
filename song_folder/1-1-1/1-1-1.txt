@@ -1,0 +1,19 @@
+[Metadata]
+Title: 1
+Artist: 1
+Creator: 1
+Version: 1
+Length: 40
+Scroll Speed: 1
+BPM: 1
+Audio Lead In: 1
+Image Path: song_folder/1-1-1/TwitterIconSm-sharedassets0.png
+Audio Path: song_folder/1-1-1/the-binding-of-isaac-rebirth-ost-empty-vessels-angel-room_QyVYSepl.mp3
+
+// Hit Object Ordering
+// 3-key configuration (1-3), hold duration, time position, 
+[HitObjects]
+
+// Laser Object Ordering
+// start time, end time, start position, end position
+[LaserObjects]

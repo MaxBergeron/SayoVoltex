@@ -1,11 +1,8 @@
-import pygame
-from game import constants
+import pygame, os
+from game import constants, settings
 from pathlib import Path
-import os
 
 from game.game_objects import HitObject, LaserObject
-
-
 
 key_bindings = {
     "key_1": pygame.K_z,
@@ -75,6 +72,7 @@ def load_assets():
             (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
         ),
     }
+
     
 
 def tint(surface, color):
@@ -97,6 +95,13 @@ def get_action_from_key(key):
             return action
     return None
 
+def set_keybindings(game_settings):
+    key_bindings["key_1"] = game_settings["key_1"]
+    key_bindings["key_2"] = game_settings["key_2"]
+    key_bindings["key_3"] = game_settings["key_3"]
+    key_bindings["key_CCW"] = game_settings["key_CCW"]
+    key_bindings["key_CW"] = game_settings["key_CW"]
+
 def after_second_to_last_slash(path: str) -> str:
     parts = Path(path).as_posix().split("/")
     return "/".join(parts[-2:])
@@ -106,10 +111,9 @@ def shorten_text(text: str, max_length: int = 40) -> str:
         return text
     return text[:max_length - 3] + "..."
 
-
 def parse_song_file(path):
     metadata = {}
-    data = {
+    objectdata = {
         "HitObjects": [],
         "LaserObjects": []
     }
@@ -152,12 +156,12 @@ def parse_song_file(path):
                 parts = [p.strip() for p in line.split(",")]
 
                 if current_section == "HitObjects":
-                    data["HitObjects"].append(HitObject(*parts))
+                    objectdata["HitObjects"].append(HitObject(*parts))
 
                 elif current_section == "LaserObjects":
-                    data["LaserObjects"].append(LaserObject(*parts))
+                    objectdata["LaserObjects"].append(LaserObject(*parts))
 
-    return metadata, data
+    return metadata, objectdata
 
 def find_map_file(song_folder):
     if not song_folder == "":
@@ -190,8 +194,9 @@ def seconds_to_minutes_seconds(total_seconds):
     seconds = int(total_seconds) % 60
     return f"{minutes}:{seconds:02}"
 
-def ms_to_min_sec_ms(total_ms):
-    minutes = int(total_ms) // 60000
-    seconds = (int(total_ms) % 60000) // 1000
-    ms = int(total_ms) % 1000
-    return f"{minutes}:{seconds:02}:{ms:02}"
+def ms_to_min_sec_ms(ms):
+    ms = int(ms)
+    minutes = ms // 60000
+    seconds = (ms % 60000) // 1000
+    millis  = ms % 1000
+    return f"{minutes}:{seconds:02d}.{millis:03d}"

@@ -1,5 +1,5 @@
 import pygame, sys, threading
-from game import button, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
+from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
 
 active_popup = None
 
@@ -27,6 +27,9 @@ def map_loader(screen):
                              text_input="Exit", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
     
+    game_settings = settings.load_settings()
+    utils.set_keybindings(game_settings)
+    
     counters = {
         "point_counter": map_counters.PointCounter(),
         "percentage_counter": map_counters.PercentageCounter(),
@@ -51,11 +54,11 @@ def map_loader(screen):
     clock = pygame.time.Clock()
 
     hit_sound = pygame.mixer.Sound(constants.HIT_SOUND_PATH)
-    hit_sound.set_volume(constants.HIT_SOUND_VOLUME)
+    hit_sound.set_volume(game_settings["sfx_volume"])
     tick_sound = pygame.mixer.Sound(constants.TICK_SOUND_PATH)
-    tick_sound.set_volume(constants.TICK_SOUND_VOLUME)
+    tick_sound.set_volume(game_settings["sfx_volume"])
     whistle_sound = pygame.mixer.Sound(constants.WHISTLE_SOUND_PATH)
-    whistle_sound.set_volume(constants.WHISTLE_SOUND_VOLUME)
+    whistle_sound.set_volume(game_settings["sfx_volume"])
     hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
 
     laser_objects = hit_object_data["LaserObjects"]
@@ -63,13 +66,12 @@ def map_loader(screen):
 
     player = None
     player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
+    player.set_volume(game_settings["music_volume"])
 
     while True:
-        print(f"WAIT TIME IS {wait_time}ms")
 
         dt = clock.tick(120)
         knob_input = 0
-        print(f"dt is {dt}ms")
         if wait_at_start:
             wait_time -= dt
             if not whistles_played[0]:
@@ -165,7 +167,7 @@ def map_loader(screen):
                     if event.key == pygame.K_ESCAPE:
                         player.unpause()
                         paused = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if continue_button.check_for_input(map_mouse_pos):
                         player.unpause()
                         paused = False
@@ -178,7 +180,7 @@ def map_loader(screen):
             continue  # skip the rest of the loop while paused
 
         # Update time
-        current_time_ms = player.get_position() * 1000
+        current_time_ms = player.get_position_ms()
 
         # Draw background
         screen.blit(dark_map_background, (0, 0))

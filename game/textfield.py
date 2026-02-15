@@ -22,7 +22,6 @@ class TextInputBox(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midleft=self.pos)
 
     def update(self, event_list):
-        dt = pygame.time.get_ticks()  # get current time in milliseconds
 
         for event in event_list:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -37,10 +36,17 @@ class TextInputBox(pygame.sprite.Sprite):
                 elif event.key == pygame.K_BACKSPACE:
                     self.backspace_held = True
                     self.backspace_timer = 0  # reset timer
+                elif event.key == pygame.K_v and (event.mod & pygame.KMOD_CTRL):
+                    pasted = pygame.scrap.get(pygame.SCRAP_TEXT)
+                    if pasted:
+                        text = pasted.decode("utf-8", errors="ignore")
+                        text = text.replace("\x00", "").strip()
+
+                        self.text += text
+                        self.render_text()
                 else:
                     self.text += event.unicode
-                self.render_text()
-
+                    self.render_text()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_BACKSPACE:
                     self.backspace_held = False

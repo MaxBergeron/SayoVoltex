@@ -295,7 +295,8 @@ class NoteTool:
             length = audio_length_ms // 1000
             f.write(f"Length: {length}\n")
             scroll_speed = float(metadata["Scroll Speed"])
-            f.write(f"Scroll Speed: {scroll_speed:.2f}\n")            
+            f.write(f"Scroll Speed: {scroll_speed:.2f}\n")
+            f.write(f"BPM: {metadata['BPM']}\n")
             f.write(f"Audio Lead In: {metadata['Audio Lead In']}\n")
             f.write(f"Image Path: {metadata['Image Path']}\n")
             f.write(f"Audio Path: {metadata['Audio Path']}\n")

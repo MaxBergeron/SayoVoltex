@@ -39,6 +39,13 @@ class Dropdown:
                     self.popup_mode = None
                 elif event.key == pygame.K_BACKSPACE:
                     self.user_input = self.user_input[:-1]
+                elif event.key == pygame.K_v and (event.mod & pygame.KMOD_CTRL):
+                    pasted = pygame.scrap.get(pygame.SCRAP_TEXT)
+                    if pasted:
+                        pasted_text = pasted.decode("utf-8").strip()
+                        pasted_text = "".join(c for c in pasted_text if c.isdigit())
+
+                        self.user_input += pasted_text
                 else:
                     if event.unicode.isdigit():
                         self.user_input += event.unicode
@@ -52,6 +59,12 @@ class Dropdown:
                     self.input_active = False
                 elif event.key == pygame.K_BACKSPACE:
                     self.user_input = self.user_input[:-1]
+                elif event.key == pygame.K_v and (event.mod & pygame.KMOD_CTRL):
+                    pasted = pygame.scrap.get(pygame.SCRAP_TEXT)
+                    if pasted:
+                        pasted_text = pasted.decode("utf-8").strip()
+
+                        self.user_input += pasted_text
                 else:
                     self.user_input += event.unicode
 
@@ -170,3 +183,7 @@ class Dropdown:
         self.popup_mode = "add_breakpoint"
         self.input_active = True
         self.user_input = ""
+
+    def delete_breakpoint(self):
+        if self.key_being_edited in self.options:
+            self.options.remove(self.key_being_edited)
