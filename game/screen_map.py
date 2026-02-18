@@ -2,6 +2,7 @@ import pygame, sys, threading
 from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
 
 active_popup = None
+countdown_popup = None
 
 def map_loader(screen):
     pygame.display.set_caption(constants.SELECTED_TILE.title)
@@ -41,9 +42,10 @@ def map_loader(screen):
     paused = False
     wait_at_start = True
     global active_popup
+    global countdown_popup
     
     elapsed_wait = 0
-    whistles_played = [False, False, False]  
+    countdown_displayed = [False, False, False]  
     WAIT_TIME = constants.INITIAL_WAIT_TIME_MS
     wait_time = WAIT_TIME
 
@@ -74,10 +76,9 @@ def map_loader(screen):
         knob_input = 0
         if wait_at_start:
             wait_time -= dt
-            if not whistles_played[0]:
-                print(f"Whistle Played {wait_time}ms")
-                whistle_sound.play()
-                whistles_played[0] = True
+            if not countdown_displayed[0]:
+                spawn_countdown("3")
+                countdown_displayed[0] = True
             if wait_time <= 0:
                 wait_at_start = False
                 player.play()
@@ -103,10 +104,10 @@ def map_loader(screen):
             wait_time_thirds = [WAIT_TIME / 3, 2 * WAIT_TIME / 3]
             elapsed_wait += dt
             for i, t in enumerate(wait_time_thirds):
-                if elapsed_wait > t and not whistles_played[i + 1]:
-                    print(f"Whistle Played {wait_time}ms")
-                    whistle_sound.play()
-                    whistles_played[i + 1] = True
+                if elapsed_wait > t and not countdown_displayed[i + 1]:
+                    numToString = str(3 - (i + 1))
+                    spawn_countdown(numToString)                    
+                    countdown_displayed[i + 1] = True
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -123,6 +124,12 @@ def map_loader(screen):
                         knob_input -= 1
             cursor.update_movement(knob_input, dt / 1000)
             cursor.draw(screen)
+
+            if countdown_popup:
+                screen.blit(countdown_popup["image"], countdown_popup["rect"])
+                countdown_popup["timer"] -= dt
+                if countdown_popup["timer"] <= 0:
+                    countdown_popup = None
 
             pygame.display.flip()
             continue  # skip the rest of the loop while paused
@@ -176,6 +183,7 @@ def map_loader(screen):
                         return states.MAP
                     elif exit_button.check_for_input(map_mouse_pos):
                         active_popup = None
+                        player.stop
                         return states.PLAY
             continue  # skip the rest of the loop while paused
 
@@ -287,10 +295,7 @@ def map_loader(screen):
         for counter in counters.values():
             counter.update(screen)
             
-
         cursor.draw(screen)
-
-
 
         # Draw accuracy popups
         if active_popup:
@@ -299,6 +304,10 @@ def map_loader(screen):
             if active_popup["timer"] <= 0:
                 active_popup = None
 
+        if current_time_ms >= constants.SELECTED_TILE.length * 1000:
+            active_popup = None 
+            player.stop
+            return (states.MAP_COMPLETE, counters)
 
 
 
@@ -342,7 +351,7 @@ def draw_lanes(screen, x_center):
     )
 
 def pause_menu(screen, player):
-    if player is not None:
+    if player is not None and player.is_playing:
         player.pause()
 
     popup_width, popup_height = utils.scale_x(500), utils.scale_y(350)
@@ -475,7 +484,7 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
 
         laser.late_start = True
         # Set conncted lasers to late start as well
-        if laser.is_chained_to_next:
+        if laser.is_chained_to_next and laser.next_laser:
             laser.next_laser.late_start = True
     elif overlap and current_time_ms <= laser.start_time + constants.MARGIN_MS and not laser.lateness_checked:
         laser.lateness_checked = True
@@ -555,6 +564,16 @@ def spawn_popup(type):
     popup_image = constants.ACCURACY_POPUPS[type]
     popup_rect = popup_image.get_rect(center=utils.scale_pos(constants.BASE_W // 2, constants.BASE_H // 2))
     active_popup = {
+        "image": popup_image,
+        "rect": popup_rect,
+        "timer": 300  
+    }
+
+def spawn_countdown(type):
+    global countdown_popup
+    popup_image = constants.COUNTDOWN_POPUPS[type]
+    popup_rect = popup_image.get_rect(center=utils.scale_pos(constants.BASE_W // 2, constants.BASE_H // 2))
+    countdown_popup = {
         "image": popup_image,
         "rect": popup_rect,
         "timer": 300  

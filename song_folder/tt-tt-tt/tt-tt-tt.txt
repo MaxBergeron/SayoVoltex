@@ -3,7 +3,7 @@ Title: tt
 Artist: tt
 Creator: tt
 Version: tt
-Length: 328
+Length: 5
 Scroll Speed: 0.60
 BPM: 120
 Audio Lead In: 1000

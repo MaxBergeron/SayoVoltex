@@ -71,6 +71,20 @@ def load_assets():
             pygame.image.load("assets/images/miss_popup.png").convert_alpha(),
             (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 100))
         ),
+    }    
+    constants.COUNTDOWN_POPUPS = {
+        "3": pygame.transform.scale(
+            pygame.image.load("assets/images/3_countdown.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 200))
+        ),
+        "2": pygame.transform.scale(
+            pygame.image.load("assets/images/2_countdown.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 200))
+        ),
+        "1": pygame.transform.scale(
+            pygame.image.load("assets/images/1_countdown.png").convert_alpha(),
+            (int(constants.SCALE_X * 200), int(constants.SCALE_Y * 200))
+        )
     }
 
     

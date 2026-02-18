@@ -1,4 +1,4 @@
-from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings
+from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings, screen_map_complete
 from game import states, utils, constants
 import pygame, sys
 
@@ -12,7 +12,8 @@ print(f"Scale X: {constants.SCALE_X}, Scale Y: {constants.SCALE_Y}")
 
 
 state = states.MENU
-metadata, objectdata, map_path = None, None, None  
+metadata, objectdata, map_path = None, None, None
+counters = None
 
 while True:
     result = None  
@@ -31,6 +32,8 @@ while True:
         result = screen_play.play_menu(screen)
     elif state == states.MAP:
         result = screen_map.map_loader(screen)
+    elif state == states.MAP_COMPLETE:
+        result = screen_map_complete.map_complete_menu(screen, counters)
         
     elif state == states.EDITOR_INITIALIZE:
         result = screen_editor_initialize.editor_initialize_menu(screen)
@@ -41,9 +44,14 @@ while True:
         pygame.quit()
         sys.exit()
 
-    # Handle return values
     if isinstance(result, tuple):
-        state, metadata, objectdata, map_path = result
+
+        if len(result) == 2:
+            state, counters = result
+
+        elif len(result) == 4:
+            state, metadata, objectdata, map_path = result
+
     else:
         state = result
 
