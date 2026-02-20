@@ -26,10 +26,8 @@ def editor_initialize_menu(screen):
     audio_file_path_got = False
     image_file_path_got = False
     song_parameters_set = False
-    display_error = False
     editor_method_chosen = None
-    error_message = ""
-    error_can_close = False
+
 
     font_small = utils.get_font(utils.scale_y(constants.SIZE_SMALL))
     font_tiny = utils.get_font(utils.scale_y(constants.SIZE_TINY))
@@ -163,28 +161,28 @@ def editor_initialize_menu(screen):
                         editor_method_chosen = None
                     elif submit_button.check_for_input(menu_mouse_pos):
                         if any(box.text == "" for box in popup_group) or not audio_file_path_got or not image_file_path_got:
-                            display_error = True
                             error_message = "Please fill in all fields and upload files."
+                            utils.show_error_modal(screen, error_message)
                         elif not user_audio_file_path.lower().endswith(('.mp3', '.ogg')):
-                            display_error = True
                             error_message = "Invalid audio file type. Please upload an mp3 or ogg file."
-                        elif not user_image_file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
-                            display_error = True
-                            error_message = "Invalid image file type. Please upload a png, jpg, or jpeg file."
+                            utils.show_error_modal(screen, error_message)
+                        elif not user_image_file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                            error_message = "Invalid image file type. Please upload a png, jpg, jpeg, or webp file."
+                            utils.show_error_modal(screen, error_message)
                         elif get_audio_length(user_audio_file_path) == 0:
-                            display_error = True
                             error_message = "Audio file length is 0. Please upload a valid audio file."
+                            utils.show_error_modal(screen, error_message)
                         elif not scroll_speed_input.text[0].isdigit() or not bpm_input.text.isdigit() or not audio_lead_in_input.text.isdigit():
-                            display_error = True
                             error_message = "Scroll Speed, BPM, and Audio Lead In must be a number."
+                            utils.show_error_modal(screen, error_message)
                         else:
-                            song_parameters_set = True
                             folder_path = f"song_folder/{title_input.text}-{version_input.text}-{creator_input.text}"
                             Path(folder_path).mkdir(exist_ok=True)
                             map_path = Path(folder_path) / f"{title_input.text}-{version_input.text}-{creator_input.text}.txt"
-                            audio_file_path = normalize_path(copy_file_to_folder(user_audio_file_path, folder_path))
-                            image_file_path = normalize_path(copy_file_to_folder(user_image_file_path, folder_path))
                             if not map_path.exists():
+                                song_parameters_set = True
+                                audio_file_path = normalize_path(copy_file_to_folder(user_audio_file_path, folder_path))
+                                image_file_path = normalize_path(copy_file_to_folder(user_image_file_path, folder_path))
                                 create_song_file(map_path, title_input.text, artist_input.text, version_input.text, 
                                                  scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
                                                  creator_input.text, audio_file_path, image_file_path)
@@ -193,8 +191,9 @@ def editor_initialize_menu(screen):
                                                  creator_input.text, audio_file_path, image_file_path)
                                 return states.EDITOR, metadata, objectdata, map_path
                             else:
-                                display_error = True
                                 error_message = "Song file already exists."
+                                utils.show_error_modal(screen, error_message)
+
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         editor_method_chosen = None
@@ -235,24 +234,6 @@ def editor_initialize_menu(screen):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         editor_method_chosen = None 
-
-        # Error display
-        if display_error:
-            display_error_message(screen, error_message)
-
-            for event in event_list:
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_ESCAPE, pygame.K_RETURN):
-                        display_error = False
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if error_can_close:
-                        display_error = False
-                        error_can_close = False
-                    else:
-                        error_can_close = True
 
         pygame.display.flip()
 
@@ -312,7 +293,7 @@ def choose_load_popup(screen, menu_mouse_pos, choose_existing_song_button, new_s
     test_button.update(screen)
 
 def create_song_file(map_path, title, artist, version, scroll_speed, BPM, audio_lead_in, creator, audio_file_path, image_file_path):
-    with open(map_path, "w") as f:
+    with open(map_path, "w", encoding="utf-8") as f:
         f.write("[Metadata]\n")
 
         f.write(f"Title: {title}\n")
@@ -368,7 +349,7 @@ def get_image_file_path():
     file_path = filedialog.askopenfilename(        
         title="Select an image file",
         initialdir=downloads_folder,
-        filetypes=(("image files", "*.png *.jpg *.jpeg"), ("All files", "*.*"))
+        filetypes=(("image files", "*.png *.jpg *.jpeg *.webp"), ("All files", "*.*"))
     )
 
     if file_path:
@@ -433,46 +414,6 @@ def get_audio_length(file_path):
     if audio is None:
         raise ValueError("Unsupported audio format")
     return int(audio.info.length)
-
-def display_error_message(screen, message):
-    title_font = utils.get_font(utils.scale_y(constants.SIZE_SMALL))
-    body_font = utils.get_font(utils.scale_y(constants.SIZE_TINY))
-
-    padding = 20
-    spacing = 10
-    border_thickness = 3
-    line_spacing = 5
-    screen_w = screen.get_width()
-    max_text_width = screen_w // 2
-
-    center_x, center_y = utils.scale_pos(constants.BASE_W // 2, constants.BASE_H // 2)
-
-    # Render title
-    title_surf = title_font.render("ERROR", True, (255, 255, 255))
-    # Wrap message text
-    lines = utils.wrap_text(message, body_font, max_text_width)
-    text_surfs = [body_font.render(line, True, (255, 255, 255)) for line in lines]
-    # Calculate box size
-    text_width = max(surf.get_width() for surf in text_surfs)
-    text_height = sum(surf.get_height() for surf in text_surfs) + line_spacing * (len(text_surfs) - 1)
-    box_width = max(title_surf.get_width(), text_width) + padding * 2
-    box_height = (title_surf.get_height() + spacing + text_height + padding * 2)
-    box_rect = pygame.Rect(0, 0, box_width, box_height)
-    box_rect.center = (center_x, center_y)
-    # Draw box
-    pygame.draw.rect(screen, (180, 0, 0), box_rect)
-    pygame.draw.rect(screen, (255, 255, 255), box_rect, border_thickness)
-    # Draw title
-    title_rect = title_surf.get_rect(
-        midtop=(box_rect.centerx, box_rect.top + padding)
-    )
-    screen.blit(title_surf, title_rect)
-    # Draw wrapped text
-    y = title_rect.bottom + spacing
-    for surf in text_surfs:
-        rect = surf.get_rect(midtop=(box_rect.centerx, y))
-        screen.blit(surf, rect)
-        y += surf.get_height() + line_spacing
 
 def assign_metadata(title, artist, version, scroll_speed, BPM, audio_lead_in, creator, audio_file_path, image_file_path):
     metadata = {

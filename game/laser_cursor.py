@@ -3,7 +3,7 @@ from game import constants, utils
 
 class LaserCursor:
     def __init__(self):
-        self.length = utils.scale_x(100)
+        self.length = utils.scale_x(80)
         self.height = utils.scale_y(20)
 
         self.image = pygame.image.load("assets/skin/cursor_blue.png").convert_alpha()

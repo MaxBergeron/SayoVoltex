@@ -14,7 +14,7 @@ class NoteTool:
         self.length = utils.scale_x(400)
         self.width = utils.scale_y(720)
 
-        self.image = pygame.image.load("assets/images/editor_grid.png")
+        self.image = pygame.image.load("assets/images/vertical_editor_grid.png")
         self.image = pygame.transform.scale(self.image, (self.length, self.width))
         self.rect = self.image.get_rect(topleft=(self.pos_x, self.pos_y))
         self.note_hover_image = pygame.image.load("assets/skin/hit_note.png").convert_alpha()
@@ -33,8 +33,9 @@ class NoteTool:
         self.active = True
 
 
-    def draw_background(self, screen):
+    def draw_background(self, screen, editor_time_ms, bpm, audio_length_ms):
         screen.blit(self.image, self.rect)
+        self.draw_hor_grid_lines(screen, editor_time_ms, bpm, audio_length_ms)
 
     def draw_notes(self, screen, editor_time_ms):
         for note in self.notes:
@@ -150,6 +151,7 @@ class NoteTool:
             start_time, end_time = end_time, start_time
             start_pos, end_pos = end_pos, start_pos 
         new_laser = LaserObject(start_time, end_time, start_pos, end_pos, True)
+        print(new_laser.start_time, new_laser.end_time, new_laser,start_pos, new_laser.end_pos)
         self.lasers.append(new_laser)
         return new_laser
 
@@ -326,6 +328,46 @@ class NoteTool:
                 start_pos = game_objects.LaserObject.denormalize_position(laser.start_pos)
                 end_pos = game_objects.LaserObject.denormalize_position(laser.end_pos)
                 f.write(f"{start}, {end}, {start_pos}, {end_pos}\n")
+
+    def draw_hor_grid_lines(self, screen, editor_time_ms, bpm, audio_length_ms):
+        color = (129,129,131)
+        dot_width = 6
+        dot_height = 3
+        dot_spacing = 4
+
+        breakpoints = self.get_breakpoints()
+        # Make sure last breakpoint covers audio end
+        if breakpoints[-1] < audio_length_ms:
+            breakpoints.append(audio_length_ms)
+
+        # Find top and bottom visible time
+        top_time = editor_time_ms - (self.width - constants.HIT_LINE_Y) / constants.SCROLL_SPEED
+        bottom_time = editor_time_ms + constants.HIT_LINE_Y / constants.SCROLL_SPEED
+
+        # Iterate over each breakpoint segment
+        for i in range(len(breakpoints) - 1):
+            start_bp = breakpoints[i]
+            end_bp = breakpoints[i + 1]
+
+            # Skip if segment is completely outside visible area
+            if end_bp < top_time or start_bp > bottom_time:
+                continue
+
+            # ms per beat for this segment
+            ms_per_beat = 60000 / int(bpm)  # you could also allow bpm per breakpoint if needed
+
+            # Start at the first beat visible in this segment
+            first_beat_index = max(int((top_time - start_bp) // ms_per_beat), 0)
+            t = start_bp + first_beat_index * ms_per_beat
+
+            while t <= min(end_bp, bottom_time):
+                y = utils.scale_y(constants.HIT_LINE_Y) - (t - editor_time_ms) * constants.SCROLL_SPEED
+                if self.pos_y <= y <= self.pos_y + self.width:
+                    x = self.pos_x
+                    while x < self.pos_x + self.length:
+                        pygame.draw.rect(screen, color, (x, y - dot_height//2, dot_width, dot_height))
+                        x += dot_width + dot_spacing
+                t += ms_per_beat
 
 
     

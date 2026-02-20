@@ -183,7 +183,7 @@ def map_loader(screen):
                         return states.MAP
                     elif exit_button.check_for_input(map_mouse_pos):
                         active_popup = None
-                        player.stop
+                        player.stop()
                         return states.PLAY
             continue  # skip the rest of the loop while paused
 
@@ -306,7 +306,7 @@ def map_loader(screen):
 
         if current_time_ms >= constants.SELECTED_TILE.length * 1000:
             active_popup = None 
-            player.stop
+            player.stop()
             return (states.MAP_COMPLETE, counters)
 
 
@@ -364,6 +364,8 @@ def pause_menu(screen, player):
     
 def evaluate_note(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
     hit_percent = 0
+    print(f"Evaluating note: key={note.key}, time={note.time}, duration={note.duration}, current_time={current_time_ms}")
+
 
     if note.duration == 0 and note.hit:
         if abs(current_time_ms - note.time) <= (constants.HIT_WINDOW/2):
@@ -425,8 +427,6 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
         else: 
             start_x = game_objects.LaserObject.laser_x_from_norm(laser.start_pos) + quarter_lane_width
             end_x = game_objects.LaserObject.laser_x_from_norm(laser.end_pos) - quarter_lane_width
-        print(f"Laser from {start_x} to {end_x}, cursor at {cursor.position_x} to {cursor.position_x + cursor.length}")
-
 
         if laser.direction == "right":
             # Start touched
@@ -493,22 +493,33 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
     if overlap and not laser.holding:
         laser.holding = True
         laser.started = True
-        laser.last_tick_time = current_time_ms
-        tick_sound.play()
-        combo_counter.value += 1
+        if laser.is_chained_from_prev and laser.prev_laser:
+            laser.last_tick_time = laser.prev_laser.last_tick_time
+            laser.total_hold_time = laser.prev_laser.total_hold_time
+        else:
+            laser.last_tick_time = current_time_ms
+            laser.total_hold_time = 0        
+            tick_sound.play()
+            combo_counter.value += 1
 
     # Hold continues
     elif overlap and laser.holding:
         if laser.last_tick_time is None:
             laser.last_tick_time = current_time_ms
-        delta = current_time_ms - laser.last_tick_time
+        ms_per_16th = 60000 / (constants.SELECTED_TILE.BPM * 4)
 
-        if delta >= constants.LASER_TICK_MS:
-            ticks = delta // constants.LASER_TICK_MS
-            laser.last_tick_time += ticks * constants.LASER_TICK_MS
-            laser.total_hold_time += ticks * constants.LASER_TICK_MS
+        # total ticks since chain started
+        total_ticks = (current_time_ms - int(laser.chain_start_time)) // ms_per_16th
+
+        if not hasattr(laser, "last_tick_index"):
+            laser.last_tick_index = -1
+
+        new_ticks = total_ticks - laser.last_tick_index
+
+        if new_ticks > 0:
+            laser.last_tick_index = total_ticks
             tick_sound.play()
-            point_counter.value += 50 * ticks
+            point_counter.value += 50 * int(new_ticks)
             combo_counter.value += 1
             gave_percentage = False
             if not gave_percentage and laser.total_hold_time >= laser.end_time - laser.start_time and not laser.start_time == laser.end_time:
@@ -591,3 +602,5 @@ def chain_lasers(lasers):
         if prev.end_time == curr.start_time:
             curr.is_chained_from_prev = True
             prev.is_chained_to_next = True
+
+            curr.chain_start_time = prev.chain_start_time

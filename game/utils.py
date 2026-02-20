@@ -1,4 +1,4 @@
-import pygame, os
+import pygame, os, sys
 from game import constants, settings
 from pathlib import Path
 
@@ -214,3 +214,76 @@ def ms_to_min_sec_ms(ms):
     seconds = (ms % 60000) // 1000
     millis  = ms % 1000
     return f"{minutes}:{seconds:02d}.{millis:03d}"
+
+
+
+
+def show_error_modal(screen, message):
+    clock = pygame.time.Clock()
+    waiting = True
+
+    pygame.event.clear()
+
+    while waiting:
+        clock.tick(60)
+
+        # Dark overlay (dim background)
+        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        screen.blit(overlay, (0, 0))
+
+        # Draw error box
+        display_error_message(screen, message)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                    waiting = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                waiting = False
+
+def display_error_message(screen, message):
+    title_font = get_font(scale_y(constants.SIZE_SMALL))
+    body_font = get_font(scale_y(constants.SIZE_TINY))
+
+    padding = 20
+    spacing = 10
+    border_thickness = 3
+    line_spacing = 5
+    screen_w = screen.get_width()
+    max_text_width = screen_w // 2
+
+    center_x, center_y = scale_pos(constants.BASE_W // 2, constants.BASE_H // 2)
+
+    # Render title
+    title_surf = title_font.render("ERROR", True, (255, 255, 255))
+    # Wrap message text
+    lines = wrap_text(message, body_font, max_text_width)
+    text_surfs = [body_font.render(line, True, (255, 255, 255)) for line in lines]
+    # Calculate box size
+    text_width = max(surf.get_width() for surf in text_surfs)
+    text_height = sum(surf.get_height() for surf in text_surfs) + line_spacing * (len(text_surfs) - 1)
+    box_width = max(title_surf.get_width(), text_width) + padding * 2
+    box_height = (title_surf.get_height() + spacing + text_height + padding * 2)
+    box_rect = pygame.Rect(0, 0, box_width, box_height)
+    box_rect.center = (center_x, center_y)
+    # Draw box
+    pygame.draw.rect(screen, (180, 0, 0), box_rect)
+    pygame.draw.rect(screen, (255, 255, 255), box_rect, border_thickness)
+    # Draw title
+    title_rect = title_surf.get_rect(
+        midtop=(box_rect.centerx, box_rect.top + padding)
+    )
+    screen.blit(title_surf, title_rect)
+    # Draw wrapped text
+    y = title_rect.bottom + spacing
+    for surf in text_surfs:
+        rect = surf.get_rect(midtop=(box_rect.centerx, y))
+        screen.blit(surf, rect)
+        y += surf.get_height() + line_spacing

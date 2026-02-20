@@ -5,20 +5,27 @@ def map_complete_menu(screen, counters):
 
     clock = pygame.time.Clock()
 
+    map_complete_background = pygame.image.load(constants.SELECTED_TILE.image_path)
+    map_complete_background = pygame.transform.scale(map_complete_background, screen.get_size()).convert()
+
+    dark_factor = constants.DARK_PERCENTAGE
+    dark_map_complete_background = map_complete_background.copy()
+    dark_map_complete_background.fill((dark_factor * 255, dark_factor * 255, dark_factor * 255), special_flags=pygame.BLEND_MULT)
+
     # Extract counters
     point_counter = counters["point_counter"]
     percentage_counter = counters["percentage_counter"]
     combo_counter = counters["combo_counter"]
 
     # Fonts
-    title_font = utils.get_font(utils.scale_y(70))
-    stat_font = utils.get_font(utils.scale_y(40))
-    small_font = utils.get_font(utils.scale_y(30))
+    title_font = utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL))
+    stat_font = utils.get_font(utils.scale_y(constants.SIZE_SMALL))
+    small_font = utils.get_font(utils.scale_y(constants.SIZE_TINY))
 
     # Buttons
     continue_button = button.Button(
         image=None,
-        pos=(utils.scale_x(640), utils.scale_y(700)),
+        pos=(utils.scale_x(1120), utils.scale_y(670)),
         text_input="Continue",
         font=stat_font,
         base_color="#d7fcd4",
@@ -27,7 +34,7 @@ def map_complete_menu(screen, counters):
 
     retry_button = button.Button(
         image=None,
-        pos=(utils.scale_x(640), utils.scale_y(800)),
+        pos=(utils.scale_x(640), utils.scale_y(670)),
         text_input="Retry",
         font=stat_font,
         base_color="#d7fcd4",
@@ -36,7 +43,7 @@ def map_complete_menu(screen, counters):
 
     exit_button = button.Button(
         image=None,
-        pos=(utils.scale_x(640), utils.scale_y(900)),
+        pos=(utils.scale_x(100), utils.scale_y(670)),
         text_input="Exit",
         font=stat_font,
         base_color="#d7fcd4",
@@ -48,11 +55,11 @@ def map_complete_menu(screen, counters):
         mouse_pos = pygame.mouse.get_pos()
 
         # Background
-        screen.fill((20, 20, 20))
+        screen.blit(dark_map_complete_background, (0,0))
 
         # Title
         title_text = title_font.render("MAP COMPLETE!", True, (255, 255, 255))
-        screen.blit(title_text, title_text.get_rect(center=(utils.scale_x(640), utils.scale_y(120))))
+        screen.blit(title_text, title_text.get_rect(center=(utils.scale_x(640), utils.scale_y(50))))
 
         # Score
         score_text = stat_font.render(
@@ -60,7 +67,7 @@ def map_complete_menu(screen, counters):
             True,
             (255, 255, 255)
         )
-        screen.blit(score_text, (utils.scale_x(200), utils.scale_y(250)))
+        screen.blit(score_text, score_text.get_rect(center=(utils.scale_x(640), utils.scale_y(200))))
 
         # Accuracy
         acc_text = stat_font.render(
@@ -68,7 +75,7 @@ def map_complete_menu(screen, counters):
             True,
             (255, 255, 255)
         )
-        screen.blit(acc_text, (utils.scale_x(200), utils.scale_y(320)))
+        screen.blit(acc_text, acc_text.get_rect(center=(utils.scale_x(640), utils.scale_y(260))))
 
         # Max Combo
         combo_text = stat_font.render(
@@ -76,11 +83,11 @@ def map_complete_menu(screen, counters):
             True,
             (255, 255, 255)
         )
-        screen.blit(combo_text, (utils.scale_x(200), utils.scale_y(390)))
+        screen.blit(combo_text, combo_text.get_rect(center=(utils.scale_x(640), utils.scale_y(320))))
 
         # Breakdown
         breakdown_title = small_font.render("Hit Breakdown:", True, (200, 200, 200))
-        screen.blit(breakdown_title, (utils.scale_x(200), utils.scale_y(470)))
+        screen.blit(breakdown_title, breakdown_title.get_rect(center=(utils.scale_x(640), utils.scale_y(400))))
 
         perfect_text = small_font.render(
             f"Perfect: {percentage_counter.perfect_hits}",
@@ -102,11 +109,10 @@ def map_complete_menu(screen, counters):
             True,
             (255, 255, 255)
         )
-
-        screen.blit(perfect_text, (utils.scale_x(220), utils.scale_y(520)))
-        screen.blit(good_text, (utils.scale_x(220), utils.scale_y(570)))
-        screen.blit(ok_text, (utils.scale_x(220), utils.scale_y(620)))
-        screen.blit(miss_text, (utils.scale_x(220), utils.scale_y(670)))
+        screen.blit(perfect_text, perfect_text.get_rect(center=(utils.scale_x(640), utils.scale_y(440))))
+        screen.blit(good_text, good_text.get_rect(center=(utils.scale_x(640), utils.scale_y(480))))
+        screen.blit(ok_text, ok_text.get_rect(center=(utils.scale_x(640), utils.scale_y(520))))
+        screen.blit(miss_text, miss_text.get_rect(center=(utils.scale_x(640), utils.scale_y(560))))
 
         # Buttons
         for b in [continue_button, retry_button, exit_button]:
@@ -129,5 +135,10 @@ def map_complete_menu(screen, counters):
 
                 if exit_button.check_for_input(mouse_pos):
                     return states.PLAY   # back to menu
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return states.PLAY
+                if event.key == pygame.K_RETURN:
+                    return states.PLAY
 
         pygame.display.flip()

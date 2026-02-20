@@ -1,6 +1,5 @@
 import pygame
 
-
 class MusicPlayer:
     def __init__(self, audio_path):
         self.audio_path = audio_path
@@ -25,7 +24,10 @@ class MusicPlayer:
         if self.is_loaded:
             return
 
-        pygame.mixer.music.load(self.audio_path)
+        try:
+            pygame.mixer.music.load(self.audio_path)
+        except pygame.error as e:
+            return False, e
 
         # Length only used for bounds
         self.length_ms = int(
@@ -33,6 +35,7 @@ class MusicPlayer:
         )
 
         self.is_loaded = True
+        return True, None
 
     # ----------------------------
     # Play / Pause / Stop

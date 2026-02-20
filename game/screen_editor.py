@@ -40,9 +40,11 @@ def editor_menu(screen, metadata, objectdata, map_path):
     last_click_y = 0
     confirm_escape_key = False
 
-
     player = music_player.MusicPlayer(metadata["Audio Path"])
-    player.load()
+    player_load_info = player.load()
+    if not player_load_info[0]:
+        utils.show_error_modal(screen, str(player_load_info[1]))
+        return states.EDITOR_INITIALIZE
     player.set_volume(game_settings["music_volume"])
     editor_time_ms = 0
     clock = pygame.time.Clock()
@@ -79,8 +81,8 @@ def editor_menu(screen, metadata, objectdata, map_path):
     play_button_image = pygame.transform.scale(play_button_image, utils.scale_pos(50, 50))
     play_button = button.Button(image=play_button_image, pos=(utils.scale_x(130), utils.scale_y(665)), text_input="",
                                   font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), base_color="#d7fcd4", hovering_color="White")
-    save_map_button = button.Button(image=None, pos=(utils.scale_x(1000), utils.scale_y(665)), text_input="Save Map",
-                                  font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), base_color="#d7fcd4", hovering_color="White")
+    save_map_button = button.Button(image=None, pos=(utils.scale_x(1140), utils.scale_y(630)), text_input="Save Map",
+                                  font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), base_color="#d7fcd4", hovering_color="White")
 
     
     while True:
@@ -89,7 +91,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
         dt = clock.tick(120)
 
         screen.blit(main_menu_background, (0, 0))
-        editor_grid.draw_background(screen)
+        editor_grid.draw_background(screen, editor_time_ms, metadata["BPM"], audio_length_ms)
         editor_grid.draw_notes(screen, editor_time_ms)
         screen.blit(map_lines_minimal, utils.scale_pos((x_center - 200), 0))
         editor_grid.draw_lasers(screen, editor_time_ms)
@@ -279,6 +281,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
         breakpoints_dropdown.draw(screen)
         add_breakpoint_button.update(screen)
         add_breakpoint_button.change_color(menu_mouse_pos)
+        draw_selected_object_info(screen, selected_hit_object, font_xtiny, utils.scale_x(1000), utils.scale_y(200))
         pygame.display.flip()
 
 def set_object_data(editor_grid, objectdata):
@@ -287,3 +290,39 @@ def set_object_data(editor_grid, objectdata):
     for laser_object in objectdata["LaserObjects"]:
         laser_object.editor = True
         editor_grid.lasers.append(laser_object)
+
+def draw_selected_object_info(screen, selected_obj, font, x, y):
+    if not selected_obj:
+        return
+
+    lines = []
+
+    # Detect type
+    if isinstance(selected_obj, game_objects.HitObject):
+        lines.append("Type: HitObject")
+        lines.append(f"Lane: {selected_obj.key}")
+        lines.append(f"Time: {selected_obj.time}")
+        lines.append(f"Duration: {selected_obj.duration}")
+
+    elif isinstance(selected_obj, game_objects.LaserObject):
+        lines.append("Type: LaserObject")
+        lines.append(f"Start: {selected_obj.start_time}")
+        lines.append(f"End: {selected_obj.end_time}")
+        lines.append(f"Start Pos: {game_objects.LaserObject.denormalize_position(selected_obj.start_pos)}")
+        lines.append(f"End Pos: {game_objects.LaserObject.denormalize_position(selected_obj.end_pos)}")
+
+    padding = 10
+    line_height = font.get_height() + 5
+
+    # Background box
+    box_width = 250
+    box_height = len(lines) * line_height + padding * 2
+
+    rect = pygame.Rect(x, y, box_width, box_height)
+    pygame.draw.rect(screen, (40, 40, 40), rect)
+    pygame.draw.rect(screen, (255, 255, 255), rect, 2)
+
+    # Draw text
+    for i, line in enumerate(lines):
+        surf = font.render(line, True, (255, 255, 255))
+        screen.blit(surf, (x + padding, y + padding + i * line_height))

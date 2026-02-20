@@ -60,8 +60,8 @@ class ComboCounter:
     def __init__(self):
         self.value = 0
         self.font = utils.get_font(utils.scale_y(constants.SIZE_SMALL))
-        self.position_x = utils.scale_x(1000)
-        self.position_y = utils.scale_y(5)
+        self.position_x = utils.scale_x(1260)
+        self.position_y = utils.scale_y(25)
         self.highest_combo = 0
         self.update_text_surface()
 
@@ -73,5 +73,6 @@ class ComboCounter:
 
   
     def update(self, screen):
-        screen.blit(self.text, (self.position_x, self.position_y))
+        text_rect = self.text.get_rect(midright=(self.position_x, self.position_y))
+        screen.blit(self.text, text_rect)
 

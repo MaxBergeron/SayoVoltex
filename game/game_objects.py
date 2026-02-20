@@ -131,10 +131,10 @@ class LaserObject:
 
         self.holding = False
         self.hold_completed = False
-        self.total_hold_time = 0
-
         self.last_tick_time = None
         self.total_hold_time = 0
+
+        self.chain_start_time = start_time
 
         self.color = None
         self.editor = editor
