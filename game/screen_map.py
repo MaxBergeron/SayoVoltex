@@ -1,13 +1,27 @@
 import pygame, sys, threading
-from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor
+from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor, song_tile
 
 active_popup = None
 countdown_popup = None
+in_editor = False
+bpm_set = False
+
 
 def map_loader(screen):
-    pygame.display.set_caption(constants.SELECTED_TILE.title)
+    global in_editor
+    if constants.EDITOR_START_TIME != 0:
+        in_editor = True
 
-    map_background = pygame.image.load(constants.SELECTED_TILE.image_path)
+    if not in_editor:
+        pygame.display.set_caption(constants.SELECTED_TILE.title)
+    else:
+        editor_metadata = song_tile.SongTile.parse_song_metadata(constants.EDITOR_MAP_PATH)
+        pygame.display.set_caption("Testing")
+
+    if not in_editor:
+        map_background = pygame.image.load(constants.SELECTED_TILE.image_path)
+    else:
+        map_background = pygame.image.load("assets\\backgrounds\checkerboard_background.jpg")
     map_background = pygame.transform.scale(map_background, screen.get_size()).convert()
 
     dark_factor = constants.DARK_PERCENTAGE
@@ -41,6 +55,7 @@ def map_loader(screen):
 
     paused = False
     wait_at_start = True
+    started_playback = False
     global active_popup
     global countdown_popup
     
@@ -53,6 +68,7 @@ def map_loader(screen):
     y_center = constants.BASE_H // 2
 
     current_time_ms = 0
+
     clock = pygame.time.Clock()
 
     hit_sound = pygame.mixer.Sound(constants.HIT_SOUND_PATH)
@@ -61,20 +77,27 @@ def map_loader(screen):
     tick_sound.set_volume(game_settings["sfx_volume"])
     whistle_sound = pygame.mixer.Sound(constants.WHISTLE_SOUND_PATH)
     whistle_sound.set_volume(game_settings["sfx_volume"])
-    hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
+    if not in_editor:
+        hit_object_data = get_game_objects.parse_file(constants.SELECTED_TILE.song_data_path)
+    else:
+        hit_object_data = get_game_objects.parse_file(constants.EDITOR_MAP_PATH)
 
     laser_objects = hit_object_data["LaserObjects"]
     chain_lasers(laser_objects)
 
     player = None
-    player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
+    if not in_editor:
+        player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
+    else:
+        editor_audio_path = editor_metadata.get("Audio Path", "NULL")
+        player = music_player.MusicPlayer(editor_audio_path)
     player.set_volume(game_settings["music_volume"])
 
     while True:
 
         dt = clock.tick(120)
         knob_input = 0
-        if wait_at_start:
+        if wait_at_start and not in_editor:
             wait_time -= dt
             if not countdown_displayed[0]:
                 spawn_countdown("3")
@@ -82,8 +105,9 @@ def map_loader(screen):
             if wait_time <= 0:
                 wait_at_start = False
                 player.play()
+
+
             map_mouse_pos = pygame.mouse.get_pos()
-            print(f"Current time {wait_time}ms")
             
             screen.blit(dark_map_background, (0, 0))
             
@@ -133,6 +157,11 @@ def map_loader(screen):
 
             pygame.display.flip()
             continue  # skip the rest of the loop while paused
+        elif not started_playback:
+            player.play()
+            if in_editor:
+                player.set_position_ms(constants.EDITOR_START_TIME)
+            started_playback = True
 
 
         # Pause handling
@@ -190,6 +219,10 @@ def map_loader(screen):
         # Update time
         current_time_ms = player.get_position_ms()
 
+        real_time = pygame.time.get_ticks()
+        audio_time = player.get_position_ms()
+        print("Drift:", real_time - audio_time)
+
         # Draw background
         screen.blit(dark_map_background, (0, 0))
 
@@ -200,6 +233,9 @@ def map_loader(screen):
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    if in_editor:
+                        metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
+                        return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
                     paused = True
                     continue
 
@@ -304,10 +340,17 @@ def map_loader(screen):
             if active_popup["timer"] <= 0:
                 active_popup = None
 
-        if current_time_ms >= constants.SELECTED_TILE.length * 1000:
-            active_popup = None 
-            player.stop()
-            return (states.MAP_COMPLETE, counters)
+        if not in_editor:
+            if current_time_ms >= constants.SELECTED_TILE.length * 1000:
+                active_popup = None 
+                player.stop()
+                return (states.MAP_COMPLETE, counters)
+        else:
+            editor_song_length = int(editor_metadata.get("Length") or 0)
+            if current_time_ms >= editor_song_length * 1000:
+                active_popup = None 
+                metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
+                return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
 
 
 
@@ -506,7 +549,12 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
     elif overlap and laser.holding:
         if laser.last_tick_time is None:
             laser.last_tick_time = current_time_ms
-        ms_per_16th = 60000 / (constants.SELECTED_TILE.BPM * 4)
+        if not in_editor and not bpm_set:
+            bpm = constants.SELECTED_TILE.BPM
+        elif not bpm_set:
+            editor_metadata = song_tile.SongTile.parse_song_metadata(constants.EDITOR_MAP_PATH)
+            bpm = int(editor_metadata.get("BPM") or 0)
+        ms_per_16th = 60000 / (bpm * 4)
 
         # total ticks since chain started
         total_ticks = (current_time_ms - int(laser.chain_start_time)) // ms_per_16th

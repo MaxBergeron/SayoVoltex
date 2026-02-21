@@ -57,8 +57,8 @@ class SongTile:
                 return full_path
         return None
 
-
-    def parse_song_metadata(self, song_data_path):
+    @staticmethod
+    def parse_song_metadata(song_data_path):
         metadata = {}
         reading_metadata = False
 

@@ -15,6 +15,7 @@ CURSOR_SNAP_WAIT_MS = 50
 INSTANT_LASER_WAIT_MS = 30
 MARGIN_MS = 10
 INITIAL_WAIT_TIME_MS = 1000
+EDITOR_START_TIME = 0
 
 HIT_LINE_Y = 640
 LANE_WIDTH = 100
@@ -42,6 +43,7 @@ HIT_SOUND_PATH = "assets/skin/hit_sound.wav"
 TICK_SOUND_PATH = "assets/skin/tick_sound.wav"
 WHISTLE_SOUND_PATH = "assets/skin/whistle_sound.wav"
 
+EDITOR_MAP_PATH = None
 ACCURACY_POPUPS = None
 COUNTDOWN_POPUPS = None
 

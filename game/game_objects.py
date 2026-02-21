@@ -331,7 +331,7 @@ class LaserObject:
         return (left_lane + half_laser_width) + norm * ((right_lane - half_laser_width) - (left_lane + half_laser_width))
     
     def assign_laser_color(self):
-        if self.is_chained_from_prev and self.prev_laser:
+        if self.is_chained_from_prev and self.prev_laser and self.prev_laser.color:
             self.color = self.prev_laser.color
         else:
             if self.direction == "right":

@@ -39,6 +39,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
     note_part_clicked = None
     last_click_y = 0
     confirm_escape_key = False
+    editor_time_set = False
 
     player = music_player.MusicPlayer(metadata["Audio Path"])
     player_load_info = player.load()
@@ -81,6 +82,8 @@ def editor_menu(screen, metadata, objectdata, map_path):
     play_button_image = pygame.transform.scale(play_button_image, utils.scale_pos(50, 50))
     play_button = button.Button(image=play_button_image, pos=(utils.scale_x(130), utils.scale_y(665)), text_input="",
                                   font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), base_color="#d7fcd4", hovering_color="White")
+    test_button = button.Button(image=None, pos=(utils.scale_x(1140), utils.scale_y(530)), text_input="Test",
+                                  font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), base_color="#d7fcd4", hovering_color="White")
     save_map_button = button.Button(image=None, pos=(utils.scale_x(1140), utils.scale_y(630)), text_input="Save Map",
                                   font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), base_color="#d7fcd4", hovering_color="White")
 
@@ -89,6 +92,14 @@ def editor_menu(screen, metadata, objectdata, map_path):
         menu_mouse_pos = pygame.mouse.get_pos()
         event_list = pygame.event.get()
         dt = clock.tick(120)
+
+        if not editor_time_set:
+            player.pause()
+            player.set_position_ms(constants.EDITOR_START_TIME)
+
+            constants.EDITOR_START_TIME = 0
+            editor_time_ms = player.get_position_ms()
+            editor_time_set = True
 
         screen.blit(main_menu_background, (0, 0))
         editor_grid.draw_background(screen, editor_time_ms, metadata["BPM"], audio_length_ms)
@@ -178,6 +189,13 @@ def editor_menu(screen, metadata, objectdata, map_path):
                         player.unpause()
                     else:
                         player.pause()
+                elif test_button.check_for_input(menu_mouse_pos):
+                    editor_grid.save_map(map_path, metadata, audio_length_ms)
+                    constants.EDITOR_MAP_PATH = map_path
+                    constants.EDITOR_START_TIME = editor_time_ms + 1
+                    player.stop()
+
+                    return states.MAP
                 elif add_breakpoint_button.check_for_input(menu_mouse_pos):
                     breakpoints_dropdown.start_add_breakpoint_prompt()
                     breakpoints_dropdown.handle_event(event, metadata, editor_grid)
@@ -274,6 +292,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
         select_laser_button.update(screen)
         select_note_button.update(screen)
         play_button.update(screen)
+        test_button.update(screen)
         save_map_button.update(screen)
         save_map_button.change_color(menu_mouse_pos)
         change_song_setup_dropdown.draw(screen)
