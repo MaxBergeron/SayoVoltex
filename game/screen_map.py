@@ -1,5 +1,5 @@
-import pygame, sys, threading
-from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor, song_tile
+import pygame, sys, threading, time
+from game import button, settings, states, constants, utils, music_player, get_game_objects, map_counters, game_objects, laser_cursor, song_tile, metronome, rhythm_stabalizer
 
 active_popup = None
 countdown_popup = None
@@ -53,9 +53,11 @@ def map_loader(screen):
     
     cursor = laser_cursor.LaserCursor()
 
+    sync_stabilizer = rhythm_stabalizer.RhythmSyncStabilizer()
+
     paused = False
     wait_at_start = True
-    started_playback = False
+    playback_started = False
     global active_popup
     global countdown_popup
     
@@ -68,6 +70,9 @@ def map_loader(screen):
     y_center = constants.BASE_H // 2
 
     current_time_ms = 0
+    start_time = 0
+    paused_time = 0
+    perf_start = None
 
     clock = pygame.time.Clock()
 
@@ -95,7 +100,7 @@ def map_loader(screen):
 
     while True:
 
-        dt = clock.tick(120)
+        dt = min(clock.tick(120), 16)
         knob_input = 0
         if wait_at_start and not in_editor:
             wait_time -= dt
@@ -104,7 +109,11 @@ def map_loader(screen):
                 countdown_displayed[0] = True
             if wait_time <= 0:
                 wait_at_start = False
-                player.play()
+                if not playback_started:
+                    player.play()
+                    perf_start = time.perf_counter()
+                    start_time = pygame.time.get_ticks()
+                    playback_started = True
 
 
             map_mouse_pos = pygame.mouse.get_pos()
@@ -140,6 +149,8 @@ def map_loader(screen):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         paused = True
+                        pause_perf_time = time.perf_counter()
+                        paused_time = pygame.time.get_ticks()
                         wait_at_start = False
                         continue
                     if event.key == utils.key_bindings["key_CW"]:
@@ -157,11 +168,16 @@ def map_loader(screen):
 
             pygame.display.flip()
             continue  # skip the rest of the loop while paused
-        elif not started_playback:
-            player.play()
+        if not playback_started:
+            player.play()  
             if in_editor:
                 player.set_position_ms(constants.EDITOR_START_TIME)
-            started_playback = True
+                perf_start = time.perf_counter()
+                start_time = pygame.time.get_ticks() - constants.EDITOR_START_TIME
+            else:
+                perf_start = time.perf_counter()
+                start_time = pygame.time.get_ticks()
+            playback_started = True
 
 
         # Pause handling
@@ -202,10 +218,13 @@ def map_loader(screen):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         player.unpause()
+                        pause_duration = time.perf_counter() - pause_perf_time
+                        perf_start += pause_duration
                         paused = False
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if continue_button.check_for_input(map_mouse_pos):
                         player.unpause()
+                        start_time += pygame.time.get_ticks() - paused_time
                         paused = False
                     elif retry_button.check_for_input(map_mouse_pos):
                         active_popup = None
@@ -216,13 +235,11 @@ def map_loader(screen):
                         return states.PLAY
             continue  # skip the rest of the loop while paused
 
-        # Update time
+        # Update time 
         current_time_ms = player.get_position_ms()
-
-        real_time = pygame.time.get_ticks()
-        audio_time = player.get_position_ms()
-        print("Drift:", real_time - audio_time)
-
+        print("The Old Time:" + str(current_time_ms))
+        current_time_ms = (time.perf_counter() - perf_start) * 1000 + constants.EDITOR_START_TIME
+        print("New Time:" + str(current_time_ms))
         # Draw background
         screen.blit(dark_map_background, (0, 0))
 
@@ -237,6 +254,8 @@ def map_loader(screen):
                         metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
                         return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
                     paused = True
+                    pause_perf_time = time.perf_counter()
+                    paused_time = pygame.time.get_ticks()
                     continue
 
                 key_str = utils.get_action_from_key(event.key)
@@ -349,6 +368,7 @@ def map_loader(screen):
             editor_song_length = int(editor_metadata.get("Length") or 0)
             if current_time_ms >= editor_song_length * 1000:
                 active_popup = None 
+                player.stop()
                 metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
                 return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
 
@@ -406,9 +426,6 @@ def pause_menu(screen, player):
     screen.blit(popup, (popup_x, popup_y))
     
 def evaluate_note(screen, note, current_time_ms, point_counter, percentage_counter, combo_counter):
-    hit_percent = 0
-    print(f"Evaluating note: key={note.key}, time={note.time}, duration={note.duration}, current_time={current_time_ms}")
-
 
     if note.duration == 0 and note.hit:
         if abs(current_time_ms - note.time) <= (constants.HIT_WINDOW/2):

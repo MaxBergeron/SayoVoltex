@@ -14,7 +14,6 @@ class MusicPlayer:
         self.start_ticks = 0
         self.start_position_ms = 0
 
-        pygame.mixer.init()
 
     # ----------------------------
     # Load Audio Once
@@ -82,26 +81,29 @@ class MusicPlayer:
 
 
     def get_position_ms(self):
-        if self.is_playing:
-            elapsed = pygame.time.get_ticks() - self.start_ticks
-            return self.start_position_ms + elapsed
+        if not self.is_playing:
+            return self.start_position_ms
 
-        return self.start_position_ms
+        pos = pygame.mixer.music.get_pos()
+
+        if pos == -1:
+            return self.start_position_ms
+
+        return self.start_position_ms + pos
 
 
     def set_position_ms(self, position_ms):
         self.load()
 
         position_ms = max(0, min(position_ms, self.length_ms))
-        was_playing = self.is_playing
-        pygame.mixer.music.play(start=position_ms / 1000)
 
-        self.start_ticks = pygame.time.get_ticks()
+        pygame.mixer.music.stop()
+        pygame.mixer.music.play(start=position_ms / 1000.0)
+
         self.start_position_ms = position_ms
+        self.start_ticks = pygame.time.get_ticks()
 
-        self.is_playing = True
-
-        if not was_playing:
+        if not self.is_playing:
             pygame.mixer.music.pause()
             self.is_playing = False
 

@@ -1,8 +1,11 @@
 from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings, screen_map_complete
 from game import states, utils, constants
-import pygame, sys
+import pygame, sys, gc
 
 pygame.init()
+pygame.mixer.init()
+print(pygame.mixer.get_init())
+gc.disable()
 game_settings = settings.load_settings()
 screen = pygame.display.set_mode((game_settings["resolution"][0], game_settings["resolution"][1]), pygame.FULLSCREEN if game_settings["fullscreen"] else 0)
 pygame.scrap.init()

@@ -86,6 +86,8 @@ def editor_menu(screen, metadata, objectdata, map_path):
                                   font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), base_color="#d7fcd4", hovering_color="White")
     save_map_button = button.Button(image=None, pos=(utils.scale_x(1140), utils.scale_y(630)), text_input="Save Map",
                                   font=utils.get_font(utils.scale_y(constants.SIZE_SMALL)), base_color="#d7fcd4", hovering_color="White")
+    
+    pygame.event.clear()
 
     
     while True:
@@ -115,6 +117,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
             if confirm_escape_key:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_y:
+                        constants.EDITOR_START_TIME = 0
                         return states.EDITOR_INITIALIZE
                     elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                         confirm_escape_key = False
@@ -240,7 +243,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
             breakpoints_dropdown.handle_event(event, {"value": editor_grid.get_breakpoints()}, editor_grid)
 
         if player.is_playing:
-            editor_time_ms += dt
+            editor_time_ms = player.get_position_ms()
             time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
         else:
             time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
