@@ -1,7 +1,10 @@
 import pygame
+from game import settings
 
 class MusicPlayer:
     def __init__(self, audio_path):
+        game_settings = settings.load_settings()
+        self.audio_delay = game_settings["audio_delay"]
         self.audio_path = audio_path
 
         self.length_ms = 0
@@ -87,9 +90,9 @@ class MusicPlayer:
         pos = pygame.mixer.music.get_pos()
 
         if pos == -1:
-            return self.start_position_ms
+            return self.start_position_ms + self.audio_delay
 
-        return self.start_position_ms + pos
+        return self.start_position_ms + pos + self.audio_delay
 
 
     def set_position_ms(self, position_ms):

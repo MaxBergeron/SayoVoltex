@@ -1,4 +1,4 @@
-from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings, screen_map_complete
+from game import screen_editor_initialize, screen_main, screen_options, screen_play, screen_set_keybinds, screen_set_resolution, screen_map, screen_editor, settings, screen_map_complete, screen_audio_settings
 from game import states, utils, constants
 import pygame, sys, gc
 
@@ -30,6 +30,8 @@ while True:
         result = screen_set_keybinds.set_keybinds_menu(screen)
     elif state == states.SET_RESOLUTION:
         result = screen_set_resolution.set_resolution_menu(screen)
+    elif state == states.AUDIO_SETTINGS:
+        result = screen_audio_settings.audio_settings_menu(screen)
 
     elif state == states.PLAY:
         result = screen_play.play_menu(screen)

@@ -6,6 +6,7 @@ SETTINGS_FILE = "game/settings.json"
 DEFAULT_SETTINGS = {
     "music_volume": 1.0,
     "sfx_volume": 0.8,
+    "audio_delay": 0,
     "scroll_speed": 1.0,
     "resolution": [1280, 720],
     "fullscreen": False,

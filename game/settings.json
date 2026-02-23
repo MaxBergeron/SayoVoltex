@@ -1,6 +1,7 @@
 {
-    "music_volume": 1.0,
+    "music_volume": 0.9083333333333333,
     "sfx_volume": 0.8,
+    "audio_delay": -200,
     "resolution": [
         1280,
         720
@@ -10,5 +11,6 @@
     "key_2": 120,
     "key_3": 99,
     "key_CCW": 113,
-    "key_CW": 119
+    "key_CW": 119,
+    "hit_volume": 0.8033333333333333
 }

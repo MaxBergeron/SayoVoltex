@@ -53,8 +53,6 @@ def map_loader(screen):
     
     cursor = laser_cursor.LaserCursor()
 
-    sync_stabilizer = rhythm_stabalizer.RhythmSyncStabilizer()
-
     paused = False
     wait_at_start = True
     playback_started = False
@@ -73,6 +71,8 @@ def map_loader(screen):
     start_time = 0
     paused_time = 0
     perf_start = None
+
+    AUDIO_DELAY_MS = game_settings["audio_delay"]
 
     clock = pygame.time.Clock()
 
@@ -237,9 +237,7 @@ def map_loader(screen):
 
         # Update time 
         current_time_ms = player.get_position_ms()
-        print("The Old Time:" + str(current_time_ms))
-        current_time_ms = (time.perf_counter() - perf_start) * 1000 + constants.EDITOR_START_TIME
-        print("New Time:" + str(current_time_ms))
+        
         # Draw background
         screen.blit(dark_map_background, (0, 0))
 

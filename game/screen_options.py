@@ -16,6 +16,9 @@ def options_menu(screen):
     set_resolution_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(400)), 
                              text_input="SET RESOLUTION", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
                              base_color="#d7fcd4", hovering_color="White")
+    audio_settings_button = button.Button(image=None, pos=(utils.scale_x(640), utils.scale_y(550)), 
+                             text_input="AUDIO SETTINGS", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
+                             base_color="#d7fcd4", hovering_color="White")
         
     back_button = button.Button(image=None, pos=(utils.scale_x(150), utils.scale_y(650)), 
                              text_input="Back", font=utils.get_font(utils.scale_y(constants.SIZE_MEDIUM_SMALL)), 
@@ -30,7 +33,7 @@ def options_menu(screen):
        
         screen.blit(options_text, options_text_rect)
 
-        for b in [set_keybinds_button, back_button, set_resolution_button]:
+        for b in [set_keybinds_button, back_button, set_resolution_button, audio_settings_button]:
             b.change_color(options_mouse_pos)
             b.update(screen)
 
@@ -44,6 +47,8 @@ def options_menu(screen):
                     return states.SET_KEYBINDS
                 elif set_resolution_button.check_for_input(options_mouse_pos):
                     return states.SET_RESOLUTION
+                elif audio_settings_button.check_for_input(options_mouse_pos):
+                    return states.AUDIO_SETTINGS
                 elif back_button.check_for_input(options_mouse_pos):
                     return states.MENU
             if event.type == pygame.KEYDOWN:
