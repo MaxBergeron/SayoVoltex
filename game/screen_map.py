@@ -237,7 +237,7 @@ def map_loader(screen):
 
         # Update time 
         current_time_ms = player.get_position_ms()
-        
+
         # Draw background
         screen.blit(dark_map_background, (0, 0))
 
@@ -369,6 +369,18 @@ def map_loader(screen):
                 player.stop()
                 metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
                 return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
+
+
+
+        # Update time 
+        options_text = utils.get_font(utils.scale_y(constants.SIZE_XTINY)).render(
+            f"{int(current_time_ms)} ms",
+            True,
+            (255,255,255))
+        screen.blit(options_text, (10,300))
+        fps = int(clock.get_fps())
+        fps_text = utils.get_font(utils.scale_y(constants.SIZE_XTINY)).render(f"FPS: {fps}", True, (255,255,255))
+        screen.blit(fps_text, (10, 250))
 
 
 
