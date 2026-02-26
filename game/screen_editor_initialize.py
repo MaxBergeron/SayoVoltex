@@ -1,6 +1,6 @@
 import os
 import shutil
-import pygame, sys
+import pygame, sys, ctypes, subprocess
 from game import button, states, utils, constants
 from game.textfield import TextInputBox
 from pathlib import Path
@@ -163,8 +163,8 @@ def editor_initialize_menu(screen):
                         if any(box.text == "" for box in popup_group) or not audio_file_path_got or not image_file_path_got:
                             error_message = "Please fill in all fields and upload files."
                             utils.show_error_modal(screen, error_message)
-                        elif not user_audio_file_path.lower().endswith(('.mp3', '.ogg')):
-                            error_message = "Invalid audio file type. Please upload an mp3 or ogg file."
+                        elif not user_audio_file_path.lower().endswith(('.mp3', '.ogg', '.wav')):
+                            error_message = "Invalid audio file type. Please upload an mp3, ogg, or wav file."
                             utils.show_error_modal(screen, error_message)
                         elif not user_image_file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
                             error_message = "Invalid image file type. Please upload a png, jpg, jpeg, or webp file."
@@ -182,6 +182,7 @@ def editor_initialize_menu(screen):
                             if not map_path.exists():
                                 song_parameters_set = True
                                 audio_file_path = normalize_path(copy_file_to_folder(user_audio_file_path, folder_path))
+                                wav_path, ogg_path = ensure_audio_pair(audio_file_path, folder_path)
                                 image_file_path = normalize_path(copy_file_to_folder(user_image_file_path, folder_path))
                                 create_song_file(map_path, title_input.text, artist_input.text, version_input.text, 
                                                  scroll_speed_input.text, bpm_input.text, audio_lead_in_input.text, 
@@ -191,7 +192,7 @@ def editor_initialize_menu(screen):
                                                  creator_input.text, audio_file_path, image_file_path)
                                 return states.EDITOR, metadata, objectdata, map_path
                             else:
-                                error_message = "Song file already exists."
+                                error_message = "Song folder already exists."
                                 utils.show_error_modal(screen, error_message)
 
                 elif event.type == pygame.KEYDOWN:
@@ -327,14 +328,61 @@ def get_audio_file_path():
     file_path = filedialog.askopenfilename(
         title="Select a song file",
         initialdir=downloads_folder,
-        filetypes=(("audio files", "*.mp3 *.ogg"), ("All files", "*.*"))
+        filetypes=(("audio files", "*.mp3 *.ogg *.wav"), ("All files", "*.*"))
     )
+
+    if not file_path:
+        return None, False
+
     root.destroy()
 
-    if file_path:
-        return file_path, True
+    return file_path, True
+    
+def ensure_audio_pair(file_path, folder_path):
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
+
+    wav_path = os.path.join(folder_path, base_name + ".wav")
+    ogg_path = os.path.join(folder_path, base_name + ".ogg")
+
+    ext = os.path.splitext(file_path)[1].lower()
+    ext = ext.lower()
+
+    if ext == ".wav":
+        if not os.path.exists(ogg_path):
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-i", wav_path,
+                "-c:a", "libvorbis",
+                "-qscale:a", "5",
+                ogg_path
+            ], check=True)
+        return wav_path, ogg_path
+
+    elif ext == ".ogg":
+        if not os.path.exists(wav_path):
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-i", ogg_path,
+                wav_path
+            ], check=True)
+        return wav_path, ogg_path
+
     else:
-        return file_path, False
+        # mp3 or something else
+        # convert to both
+        if not os.path.exists(wav_path):
+            subprocess.run(["ffmpeg", "-y", "-i", file_path, wav_path], check=True)
+
+        if not os.path.exists(ogg_path):
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-i", file_path,
+                "-c:a", "libvorbis",
+                "-qscale:a", "5",
+                ogg_path
+            ], check=True)
+
+        return wav_path, ogg_path
 
 
 def get_image_file_path():
@@ -398,6 +446,12 @@ def upload_song_folder():
         title="Select a song folder",
         initialdir=song_folder_path
     )
+
+    root.destroy()
+
+    hwnd = pygame.display.get_wm_info()['window']
+    ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
 
     if folder_path:
         return folder_path, True

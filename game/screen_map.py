@@ -68,9 +68,6 @@ def map_loader(screen):
     y_center = constants.BASE_H // 2
 
     current_time_ms = 0
-    start_time = 0
-    paused_time = 0
-    perf_start = None
 
     AUDIO_DELAY_MS = game_settings["audio_delay"]
 
@@ -90,18 +87,24 @@ def map_loader(screen):
     laser_objects = hit_object_data["LaserObjects"]
     chain_lasers(laser_objects)
 
+    pygame.mixer.music.stop()
+    pygame.mixer.music.unload()
+
     player = None
     if not in_editor:
-        player = music_player.MusicPlayer(constants.SELECTED_TILE.audio_path)
+        audio_file_path = utils.convert_to_different_audio_type(constants.SELECTED_TILE.audio_path, "wav")
+        player = music_player.MusicPlayer(audio_file_path)
+        player.load
     else:
-        editor_audio_path = editor_metadata.get("Audio Path", "NULL")
+        editor_audio_path = utils.convert_to_different_audio_type(editor_metadata.get("Audio Path", "NULL"), "ogg")
         player = music_player.MusicPlayer(editor_audio_path)
     player.set_volume(game_settings["music_volume"])
 
     while True:
 
-        dt = min(clock.tick(120), 16)
+        dt = clock.tick(240)
         knob_input = 0
+
         if wait_at_start and not in_editor:
             wait_time -= dt
             if not countdown_displayed[0]:
@@ -111,8 +114,6 @@ def map_loader(screen):
                 wait_at_start = False
                 if not playback_started:
                     player.play()
-                    perf_start = time.perf_counter()
-                    start_time = pygame.time.get_ticks()
                     playback_started = True
 
 
@@ -149,8 +150,7 @@ def map_loader(screen):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         paused = True
-                        pause_perf_time = time.perf_counter()
-                        paused_time = pygame.time.get_ticks()
+                        player.pause()
                         wait_at_start = False
                         continue
                     if event.key == utils.key_bindings["key_CW"]:
@@ -172,11 +172,6 @@ def map_loader(screen):
             player.play()  
             if in_editor:
                 player.set_position_ms(constants.EDITOR_START_TIME)
-                perf_start = time.perf_counter()
-                start_time = pygame.time.get_ticks() - constants.EDITOR_START_TIME
-            else:
-                perf_start = time.perf_counter()
-                start_time = pygame.time.get_ticks()
             playback_started = True
 
 
@@ -208,6 +203,19 @@ def map_loader(screen):
             for b in [continue_button, retry_button, exit_button]:
                 b.change_color(map_mouse_pos)
                 b.update(screen)
+
+
+
+            options_text = utils.get_font(utils.scale_y(constants.SIZE_XTINY)).render(
+            f"{int(current_time_ms)} ms",
+            True,
+            (255,255,255))
+            screen.blit(options_text, (10,300))
+            fps = int(clock.get_fps())
+            fps_text = utils.get_font(utils.scale_y(constants.SIZE_XTINY)).render(f"FPS: {fps}", True, (255,255,255))
+            screen.blit(fps_text, (10, 250))
+
+            
             pygame.display.flip()
 
             # Pause events
@@ -218,13 +226,10 @@ def map_loader(screen):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         player.unpause()
-                        pause_duration = time.perf_counter() - pause_perf_time
-                        perf_start += pause_duration
                         paused = False
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if continue_button.check_for_input(map_mouse_pos):
                         player.unpause()
-                        start_time += pygame.time.get_ticks() - paused_time
                         paused = False
                     elif retry_button.check_for_input(map_mouse_pos):
                         active_popup = None
@@ -252,8 +257,6 @@ def map_loader(screen):
                         metadata, objectdata = utils.parse_song_file(constants.EDITOR_MAP_PATH)
                         return states.EDITOR, metadata, objectdata, constants.EDITOR_MAP_PATH 
                     paused = True
-                    pause_perf_time = time.perf_counter()
-                    paused_time = pygame.time.get_ticks()
                     continue
 
                 key_str = utils.get_action_from_key(event.key)

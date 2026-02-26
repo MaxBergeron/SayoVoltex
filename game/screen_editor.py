@@ -40,8 +40,11 @@ def editor_menu(screen, metadata, objectdata, map_path):
     last_click_y = 0
     confirm_escape_key = False
     editor_time_set = False
+    timeline_dirty = False
 
-    player = music_player.MusicPlayer(metadata["Audio Path"])
+
+    audio_file_path = utils.convert_to_different_audio_type(metadata["Audio Path"], "ogg")
+    player = music_player.MusicPlayer(audio_file_path)
     player_load_info = player.load()
     if not player_load_info[0]:
         utils.show_error_modal(screen, str(player_load_info[1]))
@@ -96,6 +99,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
         dt = clock.tick(120)
 
         if not editor_time_set:
+            print("1")
             player.pause()
             player.set_position_ms(constants.EDITOR_START_TIME)
 
@@ -152,17 +156,12 @@ def editor_menu(screen, metadata, objectdata, map_path):
 
                         elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                             breakpoints_dropdown.input_active = False
-                elif event.key == pygame.K_SPACE:
-                    if not player.is_playing:
-                        player.set_position_ms(editor_time_ms)
-                        player.unpause()
-                    else:
-                        player.pause()
                 # Left Down Arrow Key
                 elif not player.is_playing and (event.key == pygame.K_LEFT or event.key == pygame.K_DOWN):
                     if editor_time_ms - 200 >= 0:
                         editor_time_ms -= 200
                         time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
+                        timeline_dirty = True
                     else:
                         editor_time_ms = 0
                         time_line.update(0)
@@ -171,9 +170,18 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     if editor_time_ms + 200 <= audio_length_ms:
                         editor_time_ms += 200
                         time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
+                        timeline_dirty = True
                     else:
                         editor_time_ms = audio_length_ms
                         time_line.update(constants.BASE_W)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    if player.is_playing:
+                        player.pause()
+                    else:
+                        print("2")
+                        player.set_position_ms(editor_time_ms)
+                        player.unpause()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 last_click_y = menu_mouse_pos[1]
                 if select_note_button.check_for_input(menu_mouse_pos):
@@ -187,11 +195,15 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     else:
                         editor_grid.object_place_type = "laser"  
                 elif play_button.check_for_input(menu_mouse_pos):
-                    if not player.is_playing:
-                        player.set_position_ms(editor_time_ms)
-                        player.unpause()
-                    else:
+                    if player.is_playing:
                         player.pause()
+                    else:
+                        if timeline_dirty:
+                            print("3")
+                            player.set_position_ms(editor_time_ms)
+                            timeline_dirty = False
+                        else:
+                            player.unpause()
                 elif test_button.check_for_input(menu_mouse_pos):
                     editor_grid.save_map(map_path, metadata, audio_length_ms)
                     constants.EDITOR_MAP_PATH = map_path
@@ -207,9 +219,11 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     return states.MENU
                 elif (clicked_info := time_line.check_for_input(menu_mouse_pos))[0]:
                     editor_time_ms = time_line.update(clicked_info[1])
-                    player.set_position_ms(editor_time_ms)
-                    if not player.is_playing:
-                        editor_time_ms = player.get_position_ms()
+                    timeline_dirty = True
+                    if player.is_playing:
+                        print("4")
+                        player.set_position_ms(editor_time_ms)
+                        timeline_dirty = False
 
                 elif selected_hit_object := editor_grid.check_for_input(menu_mouse_pos, editor_time_ms, metadata["BPM"], beat_divisor_value["value"], audio_length_ms, screen):
                     pass
@@ -227,6 +241,7 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     if editor_time_ms + event.y * 200 >= 0 and editor_time_ms + event.y * 200 <= audio_length_ms:
                         editor_time_ms += event.y * 200
                         time_line.update(editor_time_ms / audio_length_ms * constants.BASE_W)
+                        timeline_dirty = True
                     else:
                         if editor_time_ms + event.y * 200 < 0:
                             editor_time_ms = 0

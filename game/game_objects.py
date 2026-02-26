@@ -230,6 +230,16 @@ class LaserObject:
                 (end_x - self.half_width, end_y) # Tail left
             ]
 
+        EXTEND = 1.0
+        min_y = min(y for _, y in self.points)
+        new_points = []
+        for x, y in self.points:
+            if y == min_y:
+                new_points.append((x, y - EXTEND))
+            else:
+                new_points.append((x, y))
+            self.points = new_points
+
     def draw(self, screen):
         if (not self.points or self.completed) and not self.editor:
             return
@@ -294,12 +304,10 @@ class LaserObject:
 
         intersections = []
 
-        # Check every polygon edge
         for i in range(len(self.points)):
             x1, y1 = self.points[i]
             x2, y2 = self.points[(i + 1) % len(self.points)]
 
-            # Does this edge cross horizontal line y?
             if (y1 <= y <= y2) or (y2 <= y <= y1):
 
                 if y2 - y1 != 0:
@@ -310,7 +318,6 @@ class LaserObject:
 
                 intersections.append(x_at_y)
 
-        # Need at least 2 intersections for a filled shape
         if len(intersections) < 2:
             return (None, None)
 

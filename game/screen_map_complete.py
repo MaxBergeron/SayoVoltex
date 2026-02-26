@@ -79,7 +79,7 @@ def map_complete_menu(screen, counters):
 
         # Max Combo
         combo_text = stat_font.render(
-            f"Max Combo: {combo_counter.value}",
+            f"Max Combo: {combo_counter.highest_combo}",
             True,
             (255, 255, 255)
         )

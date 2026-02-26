@@ -3,8 +3,7 @@ from game import states, utils, constants
 import pygame, sys, gc
 
 pygame.init()
-pygame.mixer.init()
-print(pygame.mixer.get_init())
+pygame.mixer.init(44100, -16, 2, 256)
 gc.disable()
 game_settings = settings.load_settings()
 screen = pygame.display.set_mode((game_settings["resolution"][0], game_settings["resolution"][1]), pygame.FULLSCREEN if game_settings["fullscreen"] else 0)

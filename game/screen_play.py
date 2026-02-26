@@ -4,6 +4,7 @@ from game import button, music_player, settings, states, utils, constants, song_
 
 
 def play_menu(screen):
+
     pygame.display.set_caption("Play")
     play_background = pygame.image.load("assets/backgrounds/play_background.jpg")
     play_background = pygame.transform.scale(play_background, screen.get_size()).convert()
@@ -70,7 +71,8 @@ def play_menu(screen):
                     if tile.check_for_input(play_mouse_pos):
                         if player and player.is_playing:
                             player.stop()
-                        player = music_player.MusicPlayer(tile.audio_path)
+                        audio_file_path = utils.convert_to_different_audio_type(tile.audio_path, "wav")
+                        player = music_player.MusicPlayer(audio_file_path)
                         player.set_volume(game_settings["music_volume"])
                         player.play()
                         if selected_tile != tile:

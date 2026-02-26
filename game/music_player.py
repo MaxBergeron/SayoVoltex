@@ -1,5 +1,5 @@
-import pygame
-from game import settings
+import pygame, time
+from game import settings, utils
 
 class MusicPlayer:
     def __init__(self, audio_path):
@@ -14,7 +14,7 @@ class MusicPlayer:
         self.is_loaded = False
 
         # Timing reference
-        self.start_ticks = 0
+        self.start_perf = 0.0
         self.start_position_ms = 0
 
 
@@ -23,19 +23,18 @@ class MusicPlayer:
     # ----------------------------
 
     def load(self):
-        if self.is_loaded:
-            return
+        pygame.mixer.music.stop()
+    
 
         try:
             pygame.mixer.music.load(self.audio_path)
+            self.length_ms = int( pygame.mixer.Sound(self.audio_path).get_length() * 1000 )    
+
         except pygame.error as e:
+            utils.show_error_modal(None, str(e))
+            self.is_loaded = False
             return False, e
-
-        # Length only used for bounds
-        self.length_ms = int(
-            pygame.mixer.Sound(self.audio_path).get_length() * 1000
-        )
-
+        
         self.is_loaded = True
         return True, None
 
@@ -46,10 +45,15 @@ class MusicPlayer:
     def play(self):
         """Start from beginning."""
         self.load()
+        try: 
+            pygame.mixer.music.play()
 
-        pygame.mixer.music.play()
-        self.start_ticks = pygame.time.get_ticks()
-        self.start_position_ms = 0
+        except pygame.error as e:
+            utils.show_error_modal(None, str(e))
+
+
+        self.start_position_ms = 0.0
+        self.start_perf = time.perf_counter()
 
         self.is_playing = True
 
@@ -58,8 +62,8 @@ class MusicPlayer:
         if not self.is_playing:
             return
 
-        # Store exact current position
-        self.start_position_ms = self.get_position_ms()
+        elapsed = (time.perf_counter() - self.start_perf) * 1000
+        self.start_position_ms += elapsed
 
         pygame.mixer.music.pause()
         self.is_playing = False
@@ -70,49 +74,43 @@ class MusicPlayer:
 
         pygame.mixer.music.unpause()
 
-        # Reset tick anchor so time continues correctly
-        self.start_ticks = pygame.time.get_ticks()
-
+        # Reset high precision anchor
+        self.start_perf = time.perf_counter()
         self.is_playing = True
 
     def stop(self):
         pygame.mixer.music.stop()
 
         self.is_playing = False
-        self.start_ticks = 0
-        self.start_position_ms = 0
+        self.start_position_ms = 0.0
+        self.start_perf = 0.0
 
 
     def get_position_ms(self):
         if not self.is_playing:
-            return self.start_position_ms
-
-        pos = pygame.mixer.music.get_pos()
-
-        if pos == -1:
             return self.start_position_ms + self.audio_delay
 
-        return self.start_position_ms + pos + self.audio_delay
+        elapsed = (time.perf_counter() - self.start_perf) * 1000
+        return self.start_position_ms + elapsed + self.audio_delay
 
 
     def set_position_ms(self, position_ms):
-        self.load()
 
         position_ms = max(0, min(position_ms, self.length_ms))
 
-        pygame.mixer.music.stop()
-        pygame.mixer.music.play(start=position_ms / 1000.0)
+        self.start_position_ms = float(position_ms)
+        self.start_perf = time.perf_counter()
 
-        self.start_position_ms = position_ms
-        self.start_ticks = pygame.time.get_ticks()
-
-        if not self.is_playing:
+        if self.is_playing:
+            pygame.mixer.music.play(start=position_ms / 1000.0)
+        else:
+            pygame.mixer.music.play(start=position_ms / 1000.0)
             pygame.mixer.music.pause()
-            self.is_playing = False
 
 
     def set_volume(self, volume):
         pygame.mixer.music.set_volume(volume)
+        pass
 
 
     def get_length_ms(self):
