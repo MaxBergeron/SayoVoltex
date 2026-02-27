@@ -99,7 +99,6 @@ def editor_menu(screen, metadata, objectdata, map_path):
         dt = clock.tick(120)
 
         if not editor_time_set:
-            print("1")
             player.pause()
             player.set_position_ms(constants.EDITOR_START_TIME)
 
@@ -179,7 +178,6 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     if player.is_playing:
                         player.pause()
                     else:
-                        print("2")
                         player.set_position_ms(editor_time_ms)
                         player.unpause()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -199,7 +197,6 @@ def editor_menu(screen, metadata, objectdata, map_path):
                         player.pause()
                     else:
                         if timeline_dirty:
-                            print("3")
                             player.set_position_ms(editor_time_ms)
                             timeline_dirty = False
                         else:
@@ -221,7 +218,6 @@ def editor_menu(screen, metadata, objectdata, map_path):
                     editor_time_ms = time_line.update(clicked_info[1])
                     timeline_dirty = True
                     if player.is_playing:
-                        print("4")
                         player.set_position_ms(editor_time_ms)
                         timeline_dirty = False
 

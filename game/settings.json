@@ -12,5 +12,6 @@
     "key_3": 99,
     "key_CCW": 113,
     "key_CW": 119,
-    "hit_volume": 0.8033333333333333
+    "hit_volume": 0.8033333333333333,
+    "show_instructions_on_launch": false
 }

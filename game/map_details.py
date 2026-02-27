@@ -20,7 +20,7 @@ class MapDetails:
         font_tiny = utils.get_font(utils.scale_y(constants.SIZE_TINY))
         font_xtiny = utils.get_font(utils.scale_y(constants.SIZE_XTINY))
         details = [
-            f"Title: {self.title}",
+            f"{self.title}",
             f"Artist: {self.artist}",
             f"Creator: {self.creator}",
             f"Version: {self.version}",

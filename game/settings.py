@@ -15,6 +15,7 @@ DEFAULT_SETTINGS = {
     "key_3": pygame.K_c,
     "key_CCW": pygame.K_q,    
     "key_CW": pygame.K_w,
+    "show_instructions_on_launch": True,
 }
 
 

@@ -55,7 +55,8 @@ def play_menu(screen):
             b.change_color(play_mouse_pos)
             b.update(screen)
 
-        map_info.update(screen)
+        if selected_tile is not None:
+            map_info.update(screen)
 
         # Handle Events
         for event in pygame.event.get():
