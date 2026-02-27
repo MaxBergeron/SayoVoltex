@@ -43,7 +43,6 @@ def options_menu(screen):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if set_keybinds_button.check_for_input(options_mouse_pos):
-                    print("Set Keys button clicked!")
                     return states.SET_KEYBINDS
                 elif set_resolution_button.check_for_input(options_mouse_pos):
                     return states.SET_RESOLUTION

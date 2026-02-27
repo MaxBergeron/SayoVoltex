@@ -4,7 +4,10 @@ from game import button, constants, states, utils, settings, slider
 def audio_settings_menu(screen):
     pygame.display.set_caption("Audio Settings")
 
-    background = pygame.image.load("assets/backgrounds/set_resolution_background.png")
+    audio_settings_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("AUDIO SETTINGS", True, "#b68f40")
+    audio_settings_text_rect = audio_settings_text.get_rect(center=(utils.scale_x(640), utils.scale_y(100)))
+
+    background = pygame.image.load("assets/backgrounds/options_background.png")
     background = pygame.transform.scale(background, screen.get_size()).convert()
 
     game_settings = settings.load_settings()
@@ -17,7 +20,7 @@ def audio_settings_menu(screen):
     # Create sliders
     music_slider = slider.Slider(
         utils.scale_x(300),
-        utils.scale_y(200),
+        utils.scale_y(250),
         utils.scale_x(600),
         0.0, 1.0,
         music_vol,
@@ -26,7 +29,7 @@ def audio_settings_menu(screen):
 
     hit_slider = slider.Slider(
         utils.scale_x(300),
-        utils.scale_y(350),
+        utils.scale_y(400),
         utils.scale_x(600),
         0.0, 1.0,
         hit_vol,
@@ -35,7 +38,7 @@ def audio_settings_menu(screen):
 
     delay_slider = slider.Slider(
         utils.scale_x(300),
-        utils.scale_y(500),
+        utils.scale_y(550),
         utils.scale_x(600),
         -200, 200,
         audio_delay,
@@ -54,6 +57,8 @@ def audio_settings_menu(screen):
     while True:
         screen.blit(background, (0,0))
         mouse_pos = pygame.mouse.get_pos()
+
+        screen.blit(audio_settings_text, audio_settings_text_rect)
 
         music_slider.draw(screen)
         hit_slider.draw(screen)

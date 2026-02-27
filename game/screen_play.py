@@ -6,7 +6,7 @@ from game import button, music_player, settings, states, utils, constants, song_
 def play_menu(screen):
 
     pygame.display.set_caption("Play")
-    play_background = pygame.image.load("assets/backgrounds/play_background.jpg")
+    play_background = pygame.image.load("assets/backgrounds/play_background.png")
     play_background = pygame.transform.scale(play_background, screen.get_size()).convert()
 
     play_text = utils.get_font(utils.scale_y(constants.SIZE_LARGE)).render("Play", True, "#b68f40")
@@ -93,12 +93,18 @@ def play_menu(screen):
                             return states.MAP
             elif event.type == pygame.MOUSEWHEEL:
                 if not song_tiles:
-                    return
+                    continue
                 
                 scroll_amount = event.y * utils.scale_y(25)
 
                 TOP_LIMIT = utils.scale_y(20)
                 BOTTOM_LIMIT = utils.scale_y(630)
+
+                content_height = song_tiles[-1].position[1] - song_tiles[0].position[1]
+                visible_height = BOTTOM_LIMIT - TOP_LIMIT
+
+                if content_height <= visible_height:
+                    continue
 
                 top_y = song_tiles[0].position[1]
                 bottom_y = song_tiles[-1].position[1]

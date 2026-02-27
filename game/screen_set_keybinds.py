@@ -5,7 +5,7 @@ from game import button, constants, states, utils, settings
 
 def set_keybinds_menu(screen):
     pygame.display.set_caption("Set Keybinds")
-    set_keybinds_background = pygame.image.load("assets/backgrounds/set_keybinds_background.png")
+    set_keybinds_background = pygame.image.load("assets/backgrounds/options_background.png")
     set_keybinds_background = pygame.transform.scale(set_keybinds_background, screen.get_size()).convert()
     sayodevice_template_image = pygame.image.load("assets/images/template_sayodevice.png").convert_alpha()
     sayodevice_template_image = pygame.transform.scale(sayodevice_template_image, (utils.scale_x(500), utils.scale_y(500)))
@@ -73,23 +73,18 @@ def set_keybinds_menu(screen):
                     if apply_button.check_for_input(set_keybinds_mouse_pos):
                         settings.save_settings(game_settings)
                     if set_key1_button.check_for_input(set_keybinds_mouse_pos):
-                        print("Press a key to bind to Key 1")
                         waiting_for_key = True
                         key_to_bind = "key_1"
                     if set_key2_button.check_for_input(set_keybinds_mouse_pos):
-                        print("Press a key to bind to Key 2")
                         waiting_for_key = True
                         key_to_bind = "key_2"
                     if set_key3_button.check_for_input(set_keybinds_mouse_pos):
-                        print("Press a key to bind to Key 3")
                         waiting_for_key = True
                         key_to_bind = "key_3"
                     if set_keyCCW_button.check_for_input(set_keybinds_mouse_pos):
-                        print("Press a key to bind to Rotate CCW")
                         waiting_for_key = True
                         key_to_bind = "key_CCW"
                     if set_keyCW_button.check_for_input(set_keybinds_mouse_pos):
-                        print("Press a key to bind to Rotate CW")
                         waiting_for_key = True
                         key_to_bind = "key_CW"
 
@@ -102,7 +97,7 @@ def set_keybinds_menu(screen):
                         waiting_for_key = False
                 else:
                     if event.key == pygame.K_ESCAPE:
-                        return states.MENU
+                        return states.OPTIONS
         if waiting_for_key:
             draw_bind_key_popup(screen)
         pygame.display.flip()
