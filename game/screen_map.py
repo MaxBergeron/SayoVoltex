@@ -122,13 +122,12 @@ def map_loader(screen):
             screen.blit(dark_map_background, (0, 0))
             
             for note in hit_object_data["HitObjects"]:
-                if note.hit or note.hold_complete or note.miss:
-                    continue
                 note.draw(screen, 0)
 
             for laser in hit_object_data["LaserObjects"]:
-                laser.update_points(0)
-                laser.draw(screen)
+                if laser.completed or not laser.is_on_screen(current_time_ms, screen.get_height(), margin=100):
+                    continue
+                laser.draw(screen, current_time_ms)
 
             screen.blit(map_lines_outline, (utils.scale_x(x_center - 200), 0))
 
@@ -182,12 +181,12 @@ def map_loader(screen):
             screen.blit(dark_map_background, (0, 0))
             
             for note in hit_object_data["HitObjects"]:
-                if note.hit or note.hold_complete or note.miss:
-                    continue
                 note.draw(screen, current_time_ms)
 
             for laser in hit_object_data["LaserObjects"]:
-                laser.draw(screen)
+                if laser.completed or not laser.is_on_screen(current_time_ms, screen.get_height(), margin=100):
+                    continue
+                laser.draw(screen, current_time_ms)
 
             screen.blit(map_lines_outline, (utils.scale_x(x_center - 200), 0))
 
@@ -261,7 +260,7 @@ def map_loader(screen):
 
                 key_str = utils.get_action_from_key(event.key)
                 for note in hit_object_data["HitObjects"]:
-                    if note.hit or note.miss or note.hold_complete:
+                    if note.hit or note.miss or note.hold_complete or not note.is_on_screen(current_time_ms, screen.get_height()):
                         continue
 
                     # TAP note
@@ -276,6 +275,8 @@ def map_loader(screen):
                                 note.miss = True
                                 hit_sound.play()
                                 evaluate_note(screen, note, current_time_ms, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
+                    elif note.duration == 0 and utils.convert_int_to_key(note.key) != key_str:
+                        print("false")
 
                     # HOLD note
                     elif utils.convert_int_to_key(note.key) == key_str:
@@ -298,7 +299,7 @@ def map_loader(screen):
             elif event.type == pygame.KEYUP:
                 key_str = utils.get_action_from_key(event.key)
                 for note in hit_object_data["HitObjects"]:
-                    if note.hit or note.miss or note.hold_complete:
+                    if note.hit or note.miss or note.hold_complete or not note.is_on_screen(current_time_ms, screen.get_height()):
                         continue
 
                     # HOLD release
@@ -315,7 +316,7 @@ def map_loader(screen):
         cursor.update_movement(knob_input, dt / 1000)
 
         for note in hit_object_data["HitObjects"]:
-            if note.hit or note.miss:
+            if note.hit or note.miss or not note.is_on_screen(current_time_ms, screen.get_height()):
                 continue
             # TAP note auto-miss
             if note.duration == 0 and current_time_ms - note.time > constants.HIT_WINDOW:
@@ -330,13 +331,13 @@ def map_loader(screen):
 
         # Draw notes
         for note in hit_object_data["HitObjects"]:
-            if note.hit or note.hold_complete or note.get_bottom_y(current_time_ms) > utils.scale_y(constants.BASE_H):
-                continue
             note.draw(screen, current_time_ms)
         
         for laser in hit_object_data["LaserObjects"]:
-            laser.update_points(current_time_ms)
-            laser.draw(screen)
+            if laser.completed or not laser.is_on_screen(current_time_ms, screen.get_height(), margin=100):
+                continue
+
+            laser.draw(screen, current_time_ms)
             evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_sound, counters["point_counter"], counters["percentage_counter"], counters["combo_counter"])
             # Set position of cursor 
             prev = laser.prev_laser
@@ -523,6 +524,11 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
                 combo_counter.value = 0
                 percentage_counter.add_hit(0)
                 spawn_popup("miss")
+            if not laser.next_laser:
+                temp_laser = laser.prev_laser
+                while temp_laser is not None:
+                    temp_laser.completed = True
+                    temp_laser = temp_laser.prev_laser
         else:
             # Start touched
             if cursor.position_x + cursor.length > start_x - offset or laser.start_touched:
@@ -544,6 +550,11 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
                 combo_counter.value = 0
                 percentage_counter.add_hit(0)
                 spawn_popup("miss")
+            if not laser.next_laser:
+                temp_laser = laser.prev_laser
+                while temp_laser is not None:
+                    temp_laser.completed = True
+                    temp_laser = temp_laser.prev_laser
 
 
 
@@ -628,6 +639,11 @@ def evaluate_laser(screen, laser, cursor, current_time_ms, tick_sound, whistle_s
                 laser.miss = True
                 combo_counter.value = 0
                 spawn_popup("miss")
+            if not laser.next_laser:
+                temp_laser = laser.prev_laser
+                while temp_laser is not None:
+                    temp_laser.completed = True
+                    temp_laser = temp_laser.prev_laser
 
     # Hold breaks
     elif laser.holding and not overlap:
@@ -669,16 +685,49 @@ def spawn_countdown(type):
     }
 
 def chain_lasers(lasers):
+    if not lasers:
+        return
+
     # Sort by time
     lasers.sort(key=lambda l: l.start_time)
+
+    # Reset defaults first
+    for laser in lasers:
+        laser.prev_laser = None
+        laser.next_laser = None
+        laser.is_chained_from_prev = False
+        laser.is_chained_to_next = False
+        laser.chain_start_time = laser.start_time
+        laser.chain_first = laser
+        laser.chain_last = laser
+
+    current_chain = [lasers[0]]
 
     for i in range(1, len(lasers)):
         prev = lasers[i - 1]
         curr = lasers[i]
-        curr.prev_laser = prev
-        prev.next_laser = curr
+
         if prev.end_time == curr.start_time:
+            curr.prev_laser = prev
+            prev.next_laser = curr
+
             curr.is_chained_from_prev = True
             prev.is_chained_to_next = True
-
             curr.chain_start_time = prev.chain_start_time
+            current_chain.append(curr)
+        else:
+            finalize_chain(current_chain)
+            current_chain = [curr]
+
+    finalize_chain(current_chain)
+
+def finalize_chain(chain):
+    if not chain:
+        return
+
+    first = chain[0]
+    last = chain[-1]
+
+    for laser in chain:
+        laser.chain_first = first
+        laser.chain_last = last

@@ -171,18 +171,16 @@ class NoteTool:
             start_time = game_objects.HitObject.click_y_to_time(
                 self.laser_temp_position[1], self.initial_editor_time_ms, beat_divisor_value, self.get_breakpoint_segment)
             end_time = game_objects.HitObject.click_y_to_time(
-                position[1], editor_time_ms, beat_divisor_value, self.get_closest_breakpoint)
+                position[1], editor_time_ms, beat_divisor_value, self.get_breakpoint_segment)
             if start_time > end_time:
                 start_time, end_time = end_time, start_time
                 start_pos, end_pos = end_pos, start_pos 
             temp_laser = LaserObject(start_time, end_time, start_pos, end_pos, True)
-            temp_laser.update_points(editor_time_ms)
-            temp_laser.draw(screen)
+            temp_laser.draw(screen, editor_time_ms)
 
     def draw_lasers(self, screen, editor_time_ms):
         for laser in self.lasers:
-            laser.update_points(editor_time_ms)
-            laser.draw(screen)
+            laser.draw(screen, editor_time_ms)
 
     def set_active(self, active):
         self.active = active

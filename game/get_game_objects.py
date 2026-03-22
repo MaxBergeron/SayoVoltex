@@ -23,6 +23,10 @@ def parse_file(path):
                 current_section = "LaserObjects"
                 continue
 
+            if line.startswith("[Breakpoints]"):
+                current_section = "Breakpoints"
+                continue
+
             if current_section is None:
                 continue
 
@@ -35,6 +39,9 @@ def parse_file(path):
 
                 elif current_section == "LaserObjects":
                     data["LaserObjects"].append(LaserObject(*parts))
+
+                elif current_section == "Breakpoints":
+                    pass
 
                 continue
 

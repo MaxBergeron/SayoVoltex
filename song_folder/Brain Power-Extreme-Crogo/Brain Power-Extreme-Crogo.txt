@@ -431,5 +431,5 @@ Audio Path: song_folder/Brain Power-Extreme-Crogo/Brain Power [dTGEw_x8d10].wav
 0, 170.0, False
 2115, 170.0, False
 58585, 170.0, False
-72650, 173.0, True
+72650, 173.0, False
 118000, 170.0, False

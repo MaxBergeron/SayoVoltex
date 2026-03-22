@@ -27,6 +27,7 @@ def editor_initialize_menu(screen):
     image_file_path_got = False
     song_parameters_set = False
     editor_method_chosen = None
+    bpdata = None
 
 
     font_small = utils.get_font(utils.scale_y(constants.SIZE_SMALL))

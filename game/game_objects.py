@@ -15,6 +15,8 @@ class HitObject:
         self.hold_complete = False
 
     def draw(self, screen, current_time_ms):
+        if not self.is_on_screen(current_time_ms, screen.get_height()) or self.hit or self.miss or self.hold_complete:
+            return
         scroll_speed = constants.SCROLL_SPEED
         top_y = self.get_top_y(current_time_ms)
         self.position_x = utils.scale_x(constants.BASE_W // 2 - 150) + (self.key - 1) * utils.scale_x(100)
@@ -55,6 +57,35 @@ class HitObject:
         top_y = self.get_top_y(current_time_ms)
         note_length = self.duration * constants.SCROLL_SPEED
         return top_y - note_length
+    
+    def get_visual_top_y(self, current_time_ms):
+        top_y = self.get_top_y(current_time_ms)
+
+        # Tap note: top is just its draw position
+        if self.duration <= 0:
+            return top_y
+
+        # Hold note extends upward
+        note_length = self.duration * constants.SCROLL_SPEED
+        return top_y - note_length
+
+
+    def get_visual_bottom_y(self, current_time_ms):
+        top_y = self.get_top_y(current_time_ms)
+
+        # Tap note bottom
+        if self.duration <= 0:
+            return top_y + constants.TAP_NOTE_IMAGE.get_height()
+
+        # Hold note bottom is bottom of head image
+        head_image, _, _ = self.assign_hold_note_images()
+        return top_y + head_image.get_height()
+
+
+    def is_on_screen(self, current_time_ms, screen_height, margin=100):
+        top = self.get_visual_top_y(current_time_ms)
+        bottom = self.get_visual_bottom_y(current_time_ms)
+        return bottom >= -margin and top <= screen_height + margin
 
     def assign_hold_note_images(self):
         if self.hold_started or self.holding:
@@ -69,7 +100,7 @@ class HitObject:
                 constants.HOLD_NOTE_BODY_IMAGE,
                 constants.HOLD_NOTE_TAIL_IMAGE
             )
-        
+    
     @staticmethod
     def click_y_to_time(mouse_y, current_time_ms, beat_divisor_value, get_breakpoint_segment):
         beat_divisor_value = float(Fraction(beat_divisor_value))
@@ -150,6 +181,8 @@ class LaserObject:
 
         self.prev_laser = None
         self.next_laser = None
+        self.chain_first = None
+        self.chain_last = None
         self.is_chained_from_prev = False
         self.is_chained_to_next = False
         self.cursor_positioned = False
@@ -172,6 +205,10 @@ class LaserObject:
         self.editor = editor
 
         self.points = []
+    
+    def __str__(self):
+        return (f"LaserObject("f"start_time={self.start_time}, "f"end_time={self.end_time}, "f"duration={self.duration}, "
+        f"start_pos={self.denormalize_position(self.start_pos)}, "f"end_pos={self.denormalize_position(self.end_pos)}, "")")
 
     @staticmethod
     def normalize_position(pos):
@@ -272,7 +309,8 @@ class LaserObject:
                 new_points.append((x, y))
             self.points = new_points
 
-    def draw(self, screen):
+    def draw(self, screen, current_time):
+        self.update_points(current_time)
         if (not self.points or self.completed) and not self.editor:
             return
         
@@ -379,3 +417,35 @@ class LaserObject:
                 self.color = pygame.Color(constants.LASER_COLOR_RED)
 
         self.color.a = 180
+
+    def get_chain_bounds(self, current_time):
+        laser = self.chain_first
+        top = None
+        bottom = None
+
+        while laser:
+            laser.update_points(current_time)
+
+            if laser.points:
+                seg_top = min(y for _, y in laser.points)
+                seg_bottom = max(y for _, y in laser.points)
+
+                if top is None or seg_top < top:
+                    top = seg_top
+                if bottom is None or seg_bottom > bottom:
+                    bottom = seg_bottom
+
+            if laser == self.chain_last:
+                break
+
+            laser = laser.next_laser
+
+        return top, bottom
+    
+    def is_on_screen(self, current_time, screen_height, margin=100):
+        top, bottom = self.get_chain_bounds(current_time)
+
+        if top is None or bottom is None:
+            return False
+
+        return bottom >= -margin and top <= screen_height + margin
